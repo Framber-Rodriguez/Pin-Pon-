@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Web Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { /* ... Color variables ... */
+            --bg-color: #282c34; --game-bg: #1e1e1e; --primary-color: #fff;
+            --accent-color: #ff5733; --paddle-color: #61dafb; --opponent-color: #f0db4f;
+            --button-bg: #333; --star-color: rgba(255, 255, 255, 0.6);
+            --win-color1: #ffc700; --win-color2: #ff5733; --win-color3: #61dafb; --win-color4: #f0db4f;
+            --code-bg: #222; --code-color: #0f0; /* Added for tutorial code blocks */
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 100vh; color: var(--primary-color);
+            padding: 10px 0;
+        }
+        header, nav, footer { /* Center header, nav, footer */
+             width: 95%;
+             max-width: 700px; /* Match game container width */
+             margin: 10px auto;
+             text-align: center;
+        }
+        nav {
+            margin-bottom: 20px; /* Space below nav */
+        }
+        nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+            margin: 0 15px; /* Spacing between nav links */
+            font-size: 1.1em;
+            transition: color 0.2s ease;
+        }
+        nav a:hover, nav a.active {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        #game-container { position: relative; display: flex; flex-direction: column; align-items: center; width: 95%; max-width: 700px; }
+        #game {
+            position: relative; width: 100%; height: 450px; background-color: var(--game-bg);
+            border: 2px solid var(--primary-color); overflow: hidden; cursor: none;
+            transition: background-color 0.3s ease;
+            margin-bottom: 15px;
+        }
+        body:fullscreen #game { /* Optional: Example style for fullscreen */
+             /* width: 90vw; height: 70vh; */
+        }
+        .player { position: absolute; width: 15px; height: 100px; transition: background-color 0.3s ease; }
+        #player1 { left: 10px; background-color: var(--paddle-color); }
+        #player2 { right: 10px; background-color: var(--opponent-color); }
+        #ball { position: absolute; width: 15px; height: 15px; background-color: var(--accent-color); border-radius: 50%; transition: background-color 0.3s ease; }
+        #score { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 10; }
+        #modeSelection label, #options label { padding: 5px; margin-right: 5px; cursor: pointer; user-select: none; }
+        #modeSelection input[type="radio"] { margin-right: 3px; cursor: pointer; }
+        #controls {
+            text-align: center;
+            padding: 10px; background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px; width: 100%;
+        }
+        #options { margin: 8px 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 15px; }
+        #options > div { display: inline-flex; align-items: center; }
+        /* Button/Input styles */
+        button, select, label, input[type="number"], input[type="checkbox"], input[type="color"] { padding: 8px 10px; font-size: 14px; background-color: var(--button-bg); border: 1px solid var(--primary-color); border-radius: 5px; color: white; cursor: pointer; margin: 2px; vertical-align: middle; transition: background-color 0.2s ease; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        input[type="color"] { padding: 2px; height: 35px; width: 50px; background-color: transparent; border: 1px solid var(--primary-color); }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+        input[type="color"]::-moz-color-swatch { border: none; border-radius: 3px; }
+        input[type="number"] { width: 65px; text-align: center; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        button:not(:disabled):hover, select:hover, input[type="number"]:hover, input[type="color"]:hover { background-color: #555; }
+        button:focus, select:focus, input[type="number"]:focus, input[type="color"]:focus { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+        input[type="checkbox"], input[type="radio"] { margin-right: 5px; cursor: pointer; vertical-align: middle; width: auto; padding: 0; }
+        #instructions { margin-top: 10px; font-size: 13px; color: #ccc; min-height: 45px; line-height: 1.4; }
+        /* Particle/Win styles */
+        .particle { position: absolute; width: 3px; height: 3px; border-radius: 50%; background-color: var(--star-color); animation: particleAnimation 5s linear infinite; pointer-events: none; z-index: -1; }
+        @keyframes particleAnimation { 0% { transform: translate(0, 0); opacity: 0.8; } 100% { transform: translate(calc(var(--particle-vx) * 500px), calc(var(--particle-vy) * 500px)); opacity: 0; } }
+        .win-particle { position: absolute; width: 6px; height: 10px; border-radius: 2px; pointer-events: none; z-index: 20; opacity: 1; }
+        @keyframes win-explode { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(calc(var(--vx) * 250px), calc(var(--vy) * 250px + 150px)) rotate(720deg); opacity: 0; } }
+
+        /* CSS for showing/hiding sections */
+        .page-section {
+            display: none; /* Hide all sections by default */
+            width: 100%;
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+        #homepage-section {
+             display: block; /* Show homepage by default */
+             text-align: center;
+        }
+        #homepage-section section {
+             margin-bottom: 20px;
+             padding: 15px;
+             background-color: rgba(0, 0, 0, 0.2);
+             border-radius: 8px;
+        }
+        #game-section { /* No specific styles needed, just display logic */ }
+
+        #devlog-section main, #tutorial-section main { /* Style main content area for Dev Log & Tutorial */
+            padding: 20px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            line-height: 1.6; /* Improve readability */
+        }
+         #devlog-section h2, #tutorial-section h1, #tutorial-section h2, #tutorial-section h3 { /* Style headings in these sections */
+            color: var(--accent-color);
+            margin-top: 20px;
+            margin-bottom: 10px;
+         }
+         #devlog-section h2 { font-size: 1.5em; } /* Specific size for Dev Log H2 */
+         #tutorial-section h1 { font-size: 1.8em; }
+         #tutorial-section h2 { font-size: 1.5em; }
+         #tutorial-section h3 { font-size: 1.3em; }
+
+         #devlog-section p, #tutorial-section p,
+         #devlog-section ul, #tutorial-section ul { /* Style text and lists */
+            margin-bottom: 15px;
+            color: var(--primary-color);
+         }
+          #devlog-section ul, #tutorial-section ul { /* Basic list styling */
+            list-style: disc;
+            margin-left: 30px; /* Indent lists */
+            padding-left: 10px;
+         }
+         #devlog-section ul li, #tutorial-section ul li { /* Spacing between list items */
+             margin-bottom: 8px;
+         }
+         #devlog-section strong, #tutorial-section strong { /* Highlight keywords */
+            color: var(--opponent-color);
+         }
+
+         /* Tutorial Specific Styles */
+         #tutorial-section code { /* Inline code */
+            background-color: var(--button-bg);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            color: var(--paddle-color);
+         }
+         #tutorial-section pre { /* Code blocks */
+            background: var(--code-bg);
+            color: var(--code-color);
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 5px;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            border: 1px solid #444;
+         }
+         #tutorial-section pre code { /* Code within pre blocks */
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-family: inherit;
+         }
+         #devlog-section section, #tutorial-section section { /* Spacing between subsections */
+             margin-bottom: 25px;
+             padding-bottom: 15px;
+             border-bottom: 1px solid #444; /* Separator line */
+         }
+          #devlog-section section:last-child, #tutorial-section section:last-child {
+              border-bottom: none; /* No line after the last section */
+              margin-bottom: 0;
+              padding-bottom: 0;
+          }
+
+        /* Active navigation link */
+        nav a.active {
+             font-weight: bold;
+             /* color: var(--accent-color); */ /* Handled by hover/active */
+             /* text-decoration: underline; */ /* Handled by hover/active */
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎮 Modern Web Game</h1>
+        <p>A fresh take on the classic 2015 "Web Game in an Hour" tutorial.</p>
+    </header>
+
+    <nav>
+        <a href="#home">🏠 Home</a>
+        <a href="#play">🕹️ Play</a>
+        <a href="#devlog">🛠️ Dev Log</a>
+        <a href="#tutorial">📚 Tutorial</a>
+    </nav>
+
+    <audio id="backgroundMusic" loop></audio>
+
+
+    <div id="homepage-section" class="page-section">
+        <main>
+            <section>
+                <h2>About the Project</h2>
+                <p>We're modernizing a retro browser game with sleek visuals, better performance, and mobile-friendly design using HTML, CSS, and JavaScript (ES6+).</p>
+            </section>
+
+            <section>
+                <h2>About Elvis Medina</h2>
+                <p>I’m a web developer and game enthusiast who loves mixing creativity with code. I helped build the site, modernize the game logic, and style everything.</p>
+            </section>
+
+            <section>
+                <h2>About My Teammate</h2>
+                <p>Framber Rodriguez is a passionate programmer who worked on the game mechanics and helped troubleshoot bugs. They brought a lot of great ideas to the project.</p>
+            </section>
+        </main>
+    </div>
+
+    <div id="game-section" class="page-section">
+         <div id="game-container">
+              <div id="game">
+                   <div id="score" role="status" aria-live="polite"><span id="player1Score">0</span> - <span id="player2Score">0</span></div>
+                   <div id="player1" class="player"></div>
+                   <div id="player2" class="player"></div>
+                   <div id="ball"></div>
+              </div>
+
+              <div id="controls" aria-label="Game Controls">
+                   <div id="modeSelection">
+                        <input type="radio" name="gameMode" value="1p" id="mode1P" checked> <label for="mode1P">1 Player</label>
+                        <input type="radio" name="gameMode" value="2p" id="mode2P"> <label for="mode2P">2 Players</label>
+                   </div>
+                   <hr style="margin: 8px 0; border-color: #555;">
+                   <div id="options">
+                        <div> <label for="difficultySelect">AI Difficulty:</label> <select id="difficultySelect"> <option value="easy">Easy</option> <option value="normal" selected>Normal</option> <option value="hard">Hard</option> <option value="veryHard">Very Hard</option> <option value="impossible">Impossible</option> </select> </div>
+                        <div> <label for="winScoreInput">Win Score:</label> <input type="number" id="winScoreInput" value="10" min="1" max="1000" step="1"> </div>
+                        <div> <label for="pointsPerScoreInput">Points/Score:</label> <input type="number" id="pointsPerScoreInput" value="1" min="1" max="1000" step="1"> </div>
+                        <div> <label> <input type="checkbox" id="possessionToggle" checked> Serve on Score </label> </div>
+                        <div> <label for="player1ColorPicker">P1 Color:</label> <input type="color" id="player1ColorPicker" value="#61dafb"> </div>
+                        <div> <label for="player2ColorPicker">P2/AI Color:</label> <input type="color" id="player2ColorPicker" value="#f0db4f"> </div>
+                        <div> <label for="ballColorPicker">Ball Color:</label> <input type="color" id="ballColorPicker" value="#ff5733"> </div>
+                        <div> <label for="backgroundColorPicker">BG Color:</label> <input type="color" id="backgroundColorPicker" value="#1e1e1e"> </div>
+                        <div>
+                           <label for="musicSelect">Music:</label>
+                           <select id="musicSelect">
+                             </select>
+                        </div>
+                   </div>
+                   <hr style="margin: 8px 0; border-color: #555;">
+                  <button id="startButton">Start Game</button>
+                  <button id="resetButton">Stop & Reset</button>
+                  <button id="undoButton" disabled>Undo Point</button>
+                  <button id="toggleMusicButton">Play Music</button>
+                  <button id="fullscreenButton">Fullscreen</button>
+                  <div id="instructions"> </div>
+              </div>
+         </div>
+    </div>
+
+    <div id="devlog-section" class="page-section">
+         <main>
+              <h2>✅ Changes We Made</h2>
+              <ul>
+                <li>We modernized the 2015 “A Web Game in an Hour” project using ES6+ JavaScript and modular file structure (though integrated here for simplicity).</li>
+                <li>Replaced the old code from the tutorial with new modernized code featuring Classes and cleaner logic.</li>
+                <li>Upgraded the visual style from plain and dull to a more game-like, immersive design with CSS variables and transitions.</li>
+                <li>Added customization options (colors, difficulty, win score, music).</li>
+                <li>Implemented features like score-based serve possession and an undo button.</li>
+                <li>Structured the project as a single-page application with distinct sections (Home, Play, Dev Log, Tutorial).</li>
+              </ul>
+
+              <h2>⚠️ Challenges We Faced</h2>
+              <ul>
+                <li>It was difficult to break down and understand the original 2015 code due to lack of structure and outdated syntax (pre-ES6).</li>
+                <li>Debugging subtle issues: One bug involved the “Start Game” button not working due to a typo in an event listener setup or variable name.</li>
+                <li>Time constraints: Balancing project work with academic schedules (like finals week) made scheduling collaboration challenging.</li>
+                <li>Code organization: Deciding how to structure the JavaScript (initially considering separate files vs. integrated script) required discussion.</li>
+                <li>Learning curve: Implementing new features like the AI difficulty levels and the undo functionality involved some trial and error.</li>
+                <li>Collaboration friction: Aligning different visions for features or design sometimes required extra communication and compromise.</li>
+                <li>Version control/Deployment issues: Encountered frustrations with GitHub updates not reflecting immediately or deployment quirks, leading to exploring alternative hosting/sharing methods during development.</li>
+              </ul>
+
+              <h2>🤝 How We Worked Together</h2>
+              <ul>
+                <li>Combined in-person meetings with frequent communication via GroupMe for coordination and task assignment.</li>
+                <li><strong>Framber Rodriguez</strong> primarily focused on refining the core game mechanics (ball physics, collision, AI logic), structuring the JavaScript using classes, and troubleshooting gameplay bugs.</li>
+                <li><strong>Elvis Medina</strong> concentrated on the overall HTML structure, CSS styling and theme, implementing the user interface controls, integrating different sections, adding documentation (like this Dev Log and the Tutorial), and ensuring cross-browser/device compatibility.</li>
+                <li>Both teammates reviewed code and provided feedback to maintain consistency and functionality throughout the project.</li>
+              </ul>
+         </main>
+       </div>
+    <div id="tutorial-section" class="page-section">
+        <main>
+             <h1>🏓 Pong Game Tutorial (Updated)</h1>
+             <p>
+               Brought to you by <strong>Elvis Medina</strong> and <strong>Framber Rodriguez</strong>!
+             </p>
+
+             <p>
+               In this step-by-step guide, you’ll learn how to create one of the most legendary arcade games ever made—<strong>Pong</strong>—using modern <code>HTML</code>, <code>CSS</code>, and <code>JavaScript</code> (ES6+).
+               This tutorial breaks down the code used in this project, making it useful even if you're just starting out with game development.
+             </p>
+
+             <p>
+               Together, we'll walk you through the key parts of building this game:
+               <ul>
+                 <li>Setting up the basic game structure with HTML elements.</li>
+                 <li>Styling the game using CSS variables and layout techniques.</li>
+                 <li>Implementing game logic with JavaScript Classes:
+                    <ul>
+                        <li>Defining `Player`, `Ball`, and `AI` objects.</li>
+                        <li>Handling keyboard input for paddle movement.</li>
+                        <li>Managing ball physics, bouncing, and speed increase.</li>
+                        <li>Detecting paddle collisions accurately.</li>
+                        <li>Keeping and displaying score, checking for a winner.</li>
+                        <li>Controlling game states (running, paused).</li>
+                        <li>Implementing adjustable AI for single-player mode.</li>
+                    </ul>
+                 </li>
+                 <li>Adding customization options (colors, difficulty, music) and visual feedback (win animation).</li>
+                 <li>Structuring the page into navigable sections.</li>
+               </ul>
+             </p>
+
+             <p>
+               By understanding this code, you'll gain insights into modern <strong>JavaScript game development</strong> techniques.
+             </p>
+
+             <p><em>Let’s dive into the code!</em> 💻🔥</p>
+
+            <hr style="margin: 20px 0; border-color: #555;">
+
+            <section>
+                <h3>🧱 Foundation & Setup</h3>
+                <p>
+                  This initial part of the JavaScript code establishes the game's foundation.
+                  It defines constants for visual elements (paddle/ball size) and gameplay mechanics (speeds, angles). It initializes state variables tracking scores, game status, controls, and more. Crucially, it gets references to HTML elements (like the game area, paddles, ball, buttons) and includes checks to ensure these elements exist before proceeding. This setup prepares everything needed for the game logic to function correctly. 🎮⚙️
+                </p>
+
+                <h4>📄 JavaScript Setup Code:</h4>
+                <pre><code class="language-javascript">
+// --- Elements & Constants (Example subset) ---
+const game = document.getElementById("game");
+const player1El = document.getElementById("player1");
+// ... other element getters ...
+
+// --- Game Constants ---
+const PADDLE_HEIGHT = 100;
+const PADDLE_WIDTH = 15;
+const BALL_SIZE = 15;
+const PLAYER_SPEED = 6;
+const MAX_BOUNCE_ANGLE = Math.PI / 4; // 45 degrees
+const INITIAL_BALL_SPEED = 5;
+const BALL_SPEED_INCREASE = 0.2;
+const WIN_PARTICLE_COUNT = 40;
+
+// --- Game State ---
+let player1, player2, ball, ai; // Game objects
+let score = [0, 0]; // [Player1 score, Player2 score]
+let lastUpdate = 0; // Timestamp for delta time calculation
+let gameRunning = false; // Is the game loop active?
+let ballPossessionOnScore = true; // Does scorer serve next?
+let keysPressed = {}; // Tracks currently pressed keys
+let currentBallSpeed = INITIAL_BALL_SPEED;
+let gameMode = '1p'; // '1p' or '2p'
+let winScoreLimit = 10; // Score needed to win
+let pointsPerScoreValue = 1; // Points awarded per score
+let animationFrameId = null; // ID for cancelling game loop
+let framesSinceStart = 0; // Counter for game events timing
+let lastScoreState = null; // For undo functionality
+
+// --- Basic Element Check ---
+// (Checks if all necessary elements like game, player1El, etc. were found)
+if (!game || !player1El /* ... other checks ... */) {
+    console.error("FATAL: One or more essential HTML elements not found! Check HTML IDs.");
+    // Potentially stop script execution or disable UI
+    return;
+}
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>🎮 Player Class: Paddle Power</h2>
+                <p>The <code>Player</code> class defines how each player's paddle operates. It handles its position, size, speed, and movement based on keyboard input (or AI control). Player 1 typically uses Arrow keys, while Player 2 uses W/S keys in two-player mode. It also includes the <code>fire()</code> method to launch the ball when a player serves (using the Spacebar). Think of this as giving each paddle its own brain and rules! 🧠🕹️</p>
+
+                <pre><code class="language-javascript">
+class Player {
+    constructor(id, side) {
+        this.el = document.getElementById(id); // The HTML element
+        if (!this.el) throw new Error(`Player element not found: ${id}`);
+        this.side = side; // 'left' or 'right'
+        this.height = PADDLE_HEIGHT;
+        this.width = PADDLE_WIDTH;
+        this.speed = PLAYER_SPEED;
+        // Initial position (centered vertically)
+        this.y = (game.clientHeight - this.height) / 2;
+        this.el.style.top = `${this.y}px`; // Set initial visual position
+    }
+
+    // Update player state each frame
+    update(deltaTime) {
+        let dy = 0; // Change in y-position
+        if (!gameRunning) return; // Don't move if game isn't running
+
+        // --- Determine movement based on keys pressed and game mode ---
+        if (gameMode === '1p') {
+            if (this.side === 'left') { // Player 1 controls
+                if (keysPressed['arrowup'] || keysPressed['w']) dy = -this.speed;
+                if (keysPressed['arrowdown'] || keysPressed['s']) dy = this.speed;
+            }
+            // In 1p, right paddle is AI - movement handled by AI class
+        } else { // 2p mode
+            if (this.side === 'left') { // Player 1 controls
+                if (keysPressed['arrowup']) dy = -this.speed;
+                if (keysPressed['arrowdown']) dy = this.speed;
+            } else if (this.side === 'right') { // Player 2 controls
+                if (keysPressed['w']) dy = -this.speed;
+                if (keysPressed['s']) dy = this.speed;
+            }
+        }
+
+        // Apply movement if keys are pressed
+        if (dy !== 0) this.move(dy);
+
+        // Fire the ball if space is pressed and this player owns the ball
+        if (keysPressed[' '] && ball.owner === this) this.fire();
+    }
+
+    // Move the paddle vertically and update its visual position
+    move(dy) {
+        const newY = this.y + dy;
+        const maxY = game.clientHeight - this.height; // Max Y position
+        // Clamp position within game boundaries
+        this.y = Math.max(0, Math.min(newY, maxY));
+        this.el.style.top = `${this.y}px`; // Update CSS
+    }
+
+    // Launch the ball from the paddle
+    fire() {
+        if (ball.owner === this) { // Can only fire if owning the ball
+            // Calculate initial angle (slightly random)
+            let angle = (Math.random() - 0.5) * Math.PI / 6; // Small random angle
+
+            // Aiming assist for AI serve (optional complexity)
+            if (gameMode === '1p' && this.side === "right" && player1) {
+                 // ... (AI aiming logic as in original code) ...
+                 const playerCenterY = player1.y + player1.height / 2;
+                 const paddleCenterY = this.y + this.height / 2;
+                 const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2; // Bias factor 0.2
+                 const deltaY = targetY - (this.y + this.height / 2);
+                 const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8); // Aim towards player side distance
+                 angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8));
+            }
+
+            const directionX = this.side === "left" ? 1 : -1; // Fire away from paddle
+            // Set ball's velocity vector
+            ball.velocity = [
+                directionX * currentBallSpeed * Math.cos(angle),
+                currentBallSpeed * Math.sin(angle)
+            ];
+            ball.owner = null; // Release the ball
+        }
+    }
+
+    // Helper function to get the center Y coordinate of the paddle
+    getCenterY() {
+        return this.y + this.height / 2;
+    }
+}
+                </code></pre>
+            </section>
+
+            <section>
+                 <h2>⚽ Ball Class: Movement, Reset, and Visuals</h2>
+                 <p>The <code>Ball</code> class manages everything about the ball: its position, size, speed, and direction (velocity). It handles movement, bouncing off the top/bottom walls, and resetting its position after a point is scored or when the game starts. It also updates the ball's visual position on the screen. If a player is set as the <code>owner</code>, the ball will follow that player's paddle until fired. Collision detection with paddles is handled separately in the main game loop. ⚽️💨</p>
+
+                 <pre><code class="language-javascript">
+class Ball {
+    constructor() {
+        this.el = ballEl; // The HTML element for the ball
+        if (!this.el) throw new Error("Ball element not found");
+        this.size = BALL_SIZE;
+        this.reset(null); // Initialize position and state
+    }
+
+    // Reset ball to initial state (center or attached to owner)
+    reset(ownerInstance = null) {
+        this.owner = ownerInstance; // Assign owner if serving
+        currentBallSpeed = INITIAL_BALL_SPEED; // Reset speed
+
+        if (this.owner) {
+            // If owned, position next to the owner's paddle
+            this.followOwner();
+            this.velocity = [0, 0]; // No movement until fired
+        } else {
+            // If not owned, position in the center
+            this.x = (game.clientWidth - this.size) / 2;
+            this.y = (game.clientHeight - this.size) / 2;
+            // Give initial random velocity
+            const angle = (Math.random() * Math.PI / 2) - Math.PI / 4; // -45 to +45 deg
+            const directionX = Math.random() < 0.5 ? 1 : -1; // Random start direction
+            this.velocity = [
+                directionX * currentBallSpeed * Math.cos(angle),
+                currentBallSpeed * Math.sin(angle)
+            ];
+            this.owner = null; // Ensure owner is null
+        }
+        this.updateVisual(); // Set initial visual position
+    }
+
+    // Update ball's position each frame
+    update(deltaTime) {
+        // Only move if game is running OR ball is owned (needs to follow paddle)
+        if (!gameRunning && !this.owner) return;
+
+        if (this.owner) {
+            this.followOwner(); // Stick to the owner paddle
+        } else {
+            // Move the ball based on velocity
+            this.x += this.velocity[0];
+            this.y += this.velocity[1];
+
+            // Bounce off top and bottom walls
+            if (this.y <= 0) {
+                this.y = 0; // Prevent sticking
+                this.velocity[1] *= -1; // Reverse vertical velocity
+            } else if (this.y >= game.clientHeight - this.size) {
+                this.y = game.clientHeight - this.size; // Prevent sticking
+                this.velocity[1] *= -1; // Reverse vertical velocity
+            }
+            // Note: Paddle collisions and scoring checks happen outside this method
+        }
+        this.updateVisual(); // Update CSS position
+    }
+
+    // Position the ball next to its owner's paddle
+    followOwner() {
+        if (!this.owner) return;
+        const ownerCenterY = this.owner.y + this.owner.height / 2;
+        this.y = ownerCenterY - this.size / 2; // Center vertically with paddle
+
+        // Position horizontally next to the paddle
+        if (this.owner.side === "left") {
+            this.x = this.owner.el.offsetLeft + this.owner.width + 5; // Right of left paddle
+        } else { // 'right' side
+            this.x = this.owner.el.offsetLeft - this.size - 5; // Left of right paddle
+        }
+    }
+
+    // Update the ball's CSS style to match its internal position
+    updateVisual() {
+        if (this.el) {
+            this.el.style.left = `${this.x}px`;
+            this.el.style.top = `${this.y}px`;
+        }
+    }
+}
+                 </code></pre>
+             </section>
+
+            <section>
+                <h2>🤖 AI Class: Mastering the Paddle</h2>
+                <p>The <code>AI</code> class defines how the computer-controlled opponent behaves in 1-player mode. It takes a <code>Player</code> object to control. The AI predicts where the ball will land on its side of the court and moves its paddle to intercept it. The difficulty level (set via <code>setDifficulty</code>) affects its reaction time (<code>reactionDelay</code>), movement speed (<code>maxSpeedMultiplier</code>), prediction accuracy (<code>predictiveError</code>), and how quickly it serves the ball (<code>fireDelay</code>). It makes the AI feel more human (or superhuman!). ⚡️</p>
+
+                <pre><code class="language-javascript">
+class AI {
+    constructor(playerToControl) {
+        this.ctl = playerToControl; // The Player object the AI controls
+        // Default difficulty settings (can be changed by setDifficulty)
+        this.difficultyFactor = 0.7; // General skill level
+        this.reactionTimer = 0; // Timer for delaying reaction
+        this.reactionDelay = 180; // Time in ms AI waits before reacting
+        this.fireTimer = 0; // Timer for delaying serve
+        this.fireDelay = 600; // Time in ms AI waits before firing
+        this.predictiveError = 0.15; // Randomness in prediction (0 = perfect)
+        this.maxSpeedMultiplier = 1.0; // Max speed relative to player speed
+        this.setDifficulty('normal'); // Apply default normal settings
+    }
+
+    // Adjust AI parameters based on selected difficulty
+    setDifficulty(level) {
+        switch(level) {
+            case 'easy':
+                this.difficultyFactor = 0.4; this.reactionDelay = 300; this.fireDelay = 800;
+                this.predictiveError = 0.3; this.maxSpeedMultiplier = 0.8; break;
+            case 'normal':
+                this.difficultyFactor = 0.7; this.reactionDelay = 180; this.fireDelay = 600;
+                this.predictiveError = 0.15; this.maxSpeedMultiplier = 1.0; break;
+            case 'hard':
+                this.difficultyFactor = 1.0; this.reactionDelay = 100; this.fireDelay = 400;
+                this.predictiveError = 0.08; this.maxSpeedMultiplier = 1.2; break;
+            case 'veryHard':
+                this.difficultyFactor = 1.3; this.reactionDelay = 50; this.fireDelay = 250;
+                this.predictiveError = 0.04; this.maxSpeedMultiplier = 1.4; break;
+            case 'impossible':
+                this.difficultyFactor = 1.8; this.reactionDelay = 0; this.fireDelay = 150;
+                this.predictiveError = 0.01; this.maxSpeedMultiplier = 1.6; break;
+            default: this.setDifficulty('normal'); break; // Fallback
+        }
+    }
+
+    // Update AI state each frame
+    update(deltaTime) {
+        if (!gameRunning) return; // Do nothing if game isn't running
+
+        // --- Handle Firing ---
+        if (ball.owner === this.ctl) { // If AI owns the ball
+            this.fireTimer += deltaTime;
+            if (this.fireTimer >= this.fireDelay) {
+                this.ctl.fire(); // Fire the ball
+                this.fireTimer = 0; // Reset timer
+            }
+            return; // Stop here if AI owns the ball
+        } else {
+            this.fireTimer = 0; // Reset fire timer if not owning the ball
+        }
+
+        // --- Handle Movement ---
+        this.reactionTimer += deltaTime;
+
+        // React only after delay AND if ball is moving towards AI (right side)
+        if (this.reactionTimer >= this.reactionDelay && ball.velocity[0] > 0) {
+            // --- Predict ball's landing position ---
+            const paddleX = this.ctl.el.offsetLeft;
+            const distanceToPaddle = paddleX - (ball.x + ball.size);
+            const ballSpeedX = Math.max(Math.abs(ball.velocity[0]), 1);
+            const timeToReach = distanceToPaddle / ballSpeedX;
+            let predictedBallY = ball.y + ball.velocity[1] * timeToReach;
+
+             // Add random error based on difficulty
+             const errorAmount = (Math.random() - 0.5) * 2 * this.predictiveError * this.ctl.height;
+             predictedBallY += errorAmount;
+
+            // Basic wall bounce prediction
+             let bounces = 0;
+             const gameHeight = game.clientHeight; const ballHeight = ball.size;
+             while ((predictedBallY < 0 || predictedBallY > gameHeight - ballHeight) && bounces < 3) {
+                 predictedBallY = (predictedBallY < 0) ? -predictedBallY : 2 * (gameHeight - ballHeight) - predictedBallY;
+                 bounces++;
+             }
+             predictedBallY = Math.max(0, Math.min(predictedBallY, gameHeight - ballHeight)); // Clamp prediction
+
+            // --- Move Paddle ---
+            const targetPaddleCenterY = predictedBallY + ball.size / 2;
+            const currentPaddleCenterY = this.ctl.getCenterY();
+            const deadZone = (this.ctl.height * 0.1) / Math.max(this.difficultyFactor, 0.1);
+            let dy = 0;
+
+            if (currentPaddleCenterY < targetPaddleCenterY - deadZone) dy = this.ctl.speed * this.maxSpeedMultiplier;
+            else if (currentPaddleCenterY > targetPaddleCenterY + deadZone) dy = -this.ctl.speed * this.maxSpeedMultiplier;
+
+            if (dy !== 0) this.ctl.move(dy);
+
+        } else if(ball.velocity[0] <=0 ){
+             // Reset reaction timer if ball moves away from AI
+             this.reactionTimer = 0;
+        }
+    }
+}
+                </code></pre>
+            </section>
+
+             <section>
+                <h2>⚙️ Core Game Logic Functions</h2>
+                <p>These functions orchestrate the game flow, handling initialization, starting/stopping, updates, collisions, scoring, and user interactions with controls.</p>
+
+                <section>
+                 <h4><code>initializeGame()</code></h4>
+                 <p>Sets up the game state when the page loads or when the game section is shown. Creates player, ball, AI objects, resets scores, positions paddles, applies settings from controls (colors, difficulty, etc.), populates the music list, and updates UI elements like instructions and button states. It ensures everything is ready before the user clicks "Start Game".</p>
+                </section>
+                <section>
+                 <h4><code>startGame()</code></h4>
+                 <p>Called when the "Start Game" button is clicked. Sets <code>gameRunning</code> to true, resets scores and game state, applies current settings, potentially starts music, resets the ball (giving it an initial velocity), and kicks off the main game loop using <code>requestAnimationFrame(update)</code>.</p>
+                 </section>
+                 <section>
+                 <h4><code>pauseGameLoop(winnerMessage)</code></h4>
+                 <p>Stops the game loop by setting <code>gameRunning</code> to false and cancelling the animation frame. Clears pressed keys, pauses music. If a <code>winnerMessage</code> is provided, it displays it (usually via <code>alert</code>) and resets the ball/undo state.</p>
+                 </section>
+                 <section>
+                 <h4><code>handleResetGame()</code></h4>
+                 <p>Called by the "Stop & Reset" button. Stops the current game (using <code>pauseGameLoop</code>) and then completely re-initializes the game to its default state using <code>initializeGame()</code>.</p>
+                 </section>
+                <section>
+                 <h4><code>update(time)</code></h4>
+                 <p>The heart of the game loop. This function is called repeatedly by the browser (via <code>requestAnimationFrame</code>). It calculates the time elapsed since the last frame (<code>deltaTime</code>), updates the positions and states of the player(s), ball, and AI, checks for collisions (<code>checkCollisions</code>), checks if anyone scored (<code>checkScored</code>), and then requests the next frame, continuing the loop as long as <code>gameRunning</code> is true. It includes error handling to stop the game if something goes wrong during an update.</p>
+                </section>
+                <section>
+                 <h4><code>checkCollisions()</code> ⚡️</h4>
+                 <p>Checks if the ball has collided with either paddle. It only checks if the ball is moving towards the specific paddle and overlaps vertically. If a collision occurs, it calculates a bounce angle based on where the ball hit the paddle (higher hit = upward angle, lower hit = downward angle), reverses the ball's horizontal direction, applies the new vertical velocity based on the angle, increases the ball's speed slightly, and nudges the ball away from the paddle to prevent sticking.</p>
+                </section>
+                <section>
+                 <h4><code>checkScored()</code> 🏆</h4>
+                 <p>Checks if the ball has gone past the left or right edge of the game area. If so, it identifies the scoring player, saves the score state for the "Undo" feature, increments the score by <code>pointsPerScoreValue</code>, updates the displayed score, and checks if the win condition (<code>winScoreLimit</code>) has been met. If a player wins, it triggers a win animation (<code>triggerWinAnimation</code>) and stops the game (<code>pauseGameLoop</code>) with a win message. If no one won, it resets the ball (<code>ball.reset()</code>), potentially giving possession to the player who was scored upon (if <code>ballPossessionOnScore</code> is true).</p>
+                </section>
+                <section>
+                 <h4>Other Helper Functions</h4>
+                 <p>Includes functions like <code>updateScoreDisplay</code>, <code>updateInstructions</code>, <code>resetPaddles</code>, <code>changeDifficulty</code>, <code>handleModeChange</code>, <code>handleMusicSelection</code>, <code>toggleFullscreen</code>, etc., which handle UI updates and respond to user interactions with the control panel options.</p>
+                </section>
+             </section>
+
+            <section>
+                <h2>🎉 Wrapping Up</h2>
+                <p>Congratulations! You've explored the core components of a web-based Pong game built with HTML, CSS, and JavaScript. 🎉 While this tutorial covers the essentials, there’s always room for expansion:</p>
+                <ul>
+                    <li><strong>Advanced AI:</strong> Improve prediction, add strategy.</li>
+                    <li><strong>Power-ups:</strong> Temporary speed boosts, paddle size changes, multi-ball?</li>
+                    <li><strong>Sound Effects:</strong> Add sounds for paddle hits, scoring, wall bounces.</li>
+                    <li><strong>Visual Polish:</strong> Better animations, particle effects, customizable themes.</li>
+                    <li><strong>Mobile Controls:</strong> Implement touch controls for paddles.</li>
+                    <li><strong>Online Multiplayer:</strong> A bigger challenge using WebSockets or WebRTC!</li>
+                </ul>
+                <p>This project provides a solid foundation. Keep experimenting, keep coding, and see what amazing things you can build! 🚀</p>
+            </section>
+        </main>
+    </div>
+    <footer>
+        <p>© 2025 Modern Web Game | Built with 💻 + 🎮 by Elvis Medina & Framber Rodriguez</p> </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // --- Elements & Constants ---
+            const game = document.getElementById("game");
+            const player1El = document.getElementById("player1");
+            const player2El = document.getElementById("player2");
+            const ballEl = document.getElementById("ball");
+            const controlsEl = document.getElementById("controls");
+            const startButton = document.getElementById("startButton");
+            const resetButton = document.getElementById("resetButton");
+            const undoButton = document.getElementById("undoButton");
+            const difficultySelect = document.getElementById("difficultySelect");
+            const possessionToggle = document.getElementById("possessionToggle");
+            const toggleMusicButton = document.getElementById("toggleMusicButton");
+            const fullscreenButton = document.getElementById("fullscreenButton");
+            const musicSelect = document.getElementById("musicSelect");
+            const backgroundMusic = document.getElementById("backgroundMusic");
+            const instructionsEl = document.getElementById("instructions");
+            const modeSelectionRadios = document.querySelectorAll('input[name="gameMode"]');
+            const winScoreInput = document.getElementById('winScoreInput');
+            const pointsPerScoreInput = document.getElementById('pointsPerScoreInput');
+            const gameContainer = document.getElementById('game-container');
+            const player1ScoreEl = document.getElementById("player1Score");
+            const player2ScoreEl = document.getElementById("player2Score");
+            const player1ColorPicker = document.getElementById('player1ColorPicker');
+            const player2ColorPicker = document.getElementById('player2ColorPicker');
+            const ballColorPicker = document.getElementById('ballColorPicker');
+            const backgroundColorPicker = document.getElementById('backgroundColorPicker');
+
+            // --- Page Sections ---
+            const homepageSection = document.getElementById('homepage-section');
+            const gameSection = document.getElementById('game-section');
+            const devlogSection = document.getElementById('devlog-section');
+            const tutorialSection = document.getElementById('tutorial-section');
+            const navLinks = document.querySelectorAll('nav a');
+            const allSections = document.querySelectorAll('.page-section');
+
+
+            // --- Music Track Data (Replace srcs with your actual file paths!) ---
+            const musicTracks = [
+                { name: "None", src: "" },
+                { name: "Chill Vibes", src: "music/placeholder_chill.mp3" },
+                { name: "Retro Synth", src: "music/placeholder_synth.mp3" },
+                { name: "Action Pulse", src: "music/placeholder_action.ogg" },
+                { name: "Focused Flow", src: "music/placeholder_focus.mp3" },
+                { name: "Pixel Pursuit", src: "music/placeholder_8bit.wav" },
+                { name: "Cosmic Drift", src: "music/placeholder_ambient.mp3" },
+                { name: "Intense Battle", src: "music/placeholder_battle.mp3" },
+                { name: "Smooth Groove", src: "music/placeholder_groove.ogg" },
+                { name: "Tension Rising", src: "music/placeholder_tension.mp3" },
+                { name: "Victory Fanfare", src: "music/placeholder_win.mp3" },
+            ];
+
+            // --- Game Constants ---
+            const PADDLE_HEIGHT = 100; const PADDLE_WIDTH = 15; const BALL_SIZE = 15;
+            const PLAYER_SPEED = 6; const MAX_BOUNCE_ANGLE = Math.PI / 4;
+            const INITIAL_BALL_SPEED = 5; const BALL_SPEED_INCREASE = 0.2;
+            const WIN_PARTICLE_COUNT = 40;
+
+            // --- Game State ---
+            let player1, player2, ball, ai;
+            let score = [0, 0]; let lastUpdate = 0; let gameRunning = false;
+            let ballPosssessionOnScore = true; let keysPressed = {};
+            let currentBallSpeed = INITIAL_BALL_SPEED; let gameMode = '1p';
+            let winScoreLimit = 10; let pointsPerScoreValue = 1;
+            let animationFrameId = null; let framesSinceStart = 0;
+            let lastScoreState = null;
+
+
+             // --- Basic Element Check ---
+              if (!game || !player1El || !player2El || !ballEl || !controlsEl || !startButton || !resetButton || !undoButton || !toggleMusicButton || !fullscreenButton || !musicSelect || !backgroundMusic || !homepageSection || !gameSection || !devlogSection || !tutorialSection ) {
+                   console.error("FATAL: One or more essential HTML elements not found! Check HTML IDs.");
+                   return;
+              }
+
+
+            // --- Classes (Player, Ball, AI - Defined below) ---
+            class Player {
+             constructor(id, side) {
+                 this.el = document.getElementById(id);
+                 if (!this.el) {
+                     throw new Error(`Player element not found: ${id}`);
+                 }
+                 this.side = side;
+                 this.height = PADDLE_HEIGHT;
+                 this.width = PADDLE_WIDTH;
+                 this.speed = PLAYER_SPEED;
+                 this.y = (game.clientHeight - this.height) / 2;
+                 this.el.style.top = `${this.y}px`;
+             }
+             update(deltaTime) {
+                 let dy = 0;
+                 if (!gameRunning) return;
+                 if (gameMode === '1p') {
+                     if (this.side === 'left') {
+                         if (keysPressed['arrowup'] || keysPressed['w']) dy = -this.speed;
+                         if (keysPressed['arrowdown'] || keysPressed['s']) dy = this.speed;
+                     }
+                 } else {
+                     if (this.side === 'left') {
+                         if (keysPressed['arrowup']) dy = -this.speed;
+                         if (keysPressed['arrowdown']) dy = this.speed;
+                     } else if (this.side === 'right') {
+                         if (keysPressed['w']) dy = -this.speed;
+                         if (keysPressed['s']) dy = this.speed;
+                     }
+                 }
+                 if (dy !== 0) this.move(dy);
+                 if (keysPressed[' '] && ball.owner === this) this.fire();
+             }
+             move(dy) {
+                 const newY = this.y + dy;
+                 const maxY = game.clientHeight - this.height;
+                 this.y = Math.max(0, Math.min(newY, maxY));
+                 this.el.style.top = `${this.y}px`;
+             }
+            fire() {
+                if (ball.owner === this) {
+                    let angle = (Math.random() - 0.5) * Math.PI / 6;
+                    if (gameMode === '1p' && this.side === "right" && player1) {
+                        const playerCenterY = player1.y + player1.height / 2;
+                        const paddleCenterY = this.y + this.height / 2;
+                        const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2;
+                        const deltaY = targetY - (this.y + this.height / 2);
+                        const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8);
+                        angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8));
+                    }
+                    const directionX = this.side === "left" ? 1 : -1;
+                    ball.velocity = [
+                        directionX * currentBallSpeed * Math.cos(angle),
+                        currentBallSpeed * Math.sin(angle)
+                    ];
+                    ball.owner = null;
+                }
+            }
+             getCenterY() { return this.y + this.height / 2; }
+         }
+
+         class Ball {
+             constructor() {
+                 this.el = ballEl;
+                  if(!this.el) throw new Error("Ball element not found");
+                 this.size = BALL_SIZE;
+                 this.reset(null);
+             }
+             reset(ownerInstance = null) {
+                 this.owner = ownerInstance;
+                 currentBallSpeed = INITIAL_BALL_SPEED;
+                 if (this.owner) {
+                     this.followOwner();
+                     this.velocity = [0, 0];
+                 } else {
+                     this.x = (game.clientWidth - this.size) / 2;
+                     this.y = (game.clientHeight - this.size) / 2;
+                     const angle = (Math.random() * Math.PI / 2) - Math.PI / 4;
+                     const directionX = Math.random() < 0.5 ? 1 : -1;
+                     this.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ];
+                     this.owner = null;
+                 }
+                 this.updateVisual();
+             }
+             update(deltaTime) {
+                 if (!gameRunning && !this.owner) return;
+                 if (this.owner) {
+                     this.followOwner();
+                 } else {
+                     this.x += this.velocity[0];
+                     this.y += this.velocity[1];
+                     if (this.y <= 0) {
+                         this.y = 0; this.velocity[1] *= -1;
+                     } else if (this.y >= game.clientHeight - this.size) {
+                         this.y = game.clientHeight - this.size; this.velocity[1] *= -1;
+                     }
+                 }
+                 this.updateVisual();
+             }
+             followOwner() {
+                 if (!this.owner || !this.owner.el) return; // Added check for owner.el
+                 const ownerCenterY = this.owner.y + this.owner.height / 2;
+                 this.y = ownerCenterY - this.size / 2;
+                 if (this.owner.side === "left") {
+                      this.x = this.owner.el.offsetLeft + this.owner.width + 5;
+                 } else {
+                     this.x = this.owner.el.offsetLeft - this.size - 5;
+                 }
+             }
+             updateVisual() {
+                  if (this.el) {
+                       this.el.style.left = `${this.x}px`;
+                       this.el.style.top = `${this.y}px`;
+                  }
+             }
+         }
+
+        class AI {
+             constructor(playerToControl) {
+                 this.ctl = playerToControl;
+                 this.difficultyFactor = 0.7; this.reactionTimer = 0; this.reactionDelay = 180;
+                 this.fireDelay = 600; this.fireTimer = 0; this.predictiveError = 0.15;
+                 this.maxSpeedMultiplier = 1.0;
+                 this.setDifficulty('normal');
+             }
+            setDifficulty(level) {
+                switch(level) {
+                    case 'easy': this.difficultyFactor=0.4; this.reactionDelay=300; this.fireDelay=800; this.predictiveError=0.3; this.maxSpeedMultiplier=0.8; break;
+                    case 'normal': this.difficultyFactor=0.7; this.reactionDelay=180; this.fireDelay=600; this.predictiveError=0.15; this.maxSpeedMultiplier=1.0; break;
+                    case 'hard': this.difficultyFactor=1.0; this.reactionDelay=100; this.fireDelay=400; this.predictiveError=0.08; this.maxSpeedMultiplier=1.2; break;
+                    case 'veryHard': this.difficultyFactor=1.3; this.reactionDelay=50; this.fireDelay=250; this.predictiveError=0.04; this.maxSpeedMultiplier=1.4; break;
+                    case 'impossible': this.difficultyFactor=1.8; this.reactionDelay=0; this.fireDelay=150; this.predictiveError=0.01; this.maxSpeedMultiplier=1.6; break;
+                    default: this.setDifficulty('normal'); break;
+                }
+             }
+             update(deltaTime) {
+                 if (!gameRunning || !ball || !this.ctl || !this.ctl.el) return; // Added checks
+                 if (ball.owner === this.ctl) {
+                     this.fireTimer += deltaTime;
+                     if (this.fireTimer >= this.fireDelay) { this.ctl.fire(); this.fireTimer = 0; }
+                     return;
+                 } else { this.fireTimer = 0; }
+
+                 this.reactionTimer += deltaTime;
+                 if (this.reactionTimer >= this.reactionDelay && ball.velocity[0] > 0) {
+                     const paddleX = this.ctl.el.offsetLeft;
+                     const distanceToPaddle = paddleX - (ball.x + ball.size);
+                     const ballSpeedX = Math.max(Math.abs(ball.velocity[0]), 1);
+                     const timeToReach = distanceToPaddle / ballSpeedX;
+                     let predictedBallY = ball.y + ball.velocity[1] * timeToReach;
+                     const errorAmount = (Math.random() - 0.5) * 2 * this.predictiveError * this.ctl.height;
+                     predictedBallY += errorAmount;
+                     let bounces = 0; const gameHeight = game.clientHeight; const ballHeight = ball.size;
+                     while ((predictedBallY < 0 || predictedBallY > gameHeight - ballHeight) && bounces < 3) {
+                         predictedBallY = (predictedBallY < 0) ? -predictedBallY : 2 * (gameHeight - ballHeight) - predictedBallY;
+                         bounces++;
+                     }
+                     predictedBallY = Math.max(0, Math.min(predictedBallY, gameHeight - ballHeight));
+                     const targetPaddleCenterY = predictedBallY + ball.size / 2;
+                     const currentPaddleCenterY = this.ctl.getCenterY();
+                     const deadZone = (this.ctl.height * 0.1) / Math.max(this.difficultyFactor, 0.1);
+                     let dy = 0;
+                     if (currentPaddleCenterY < targetPaddleCenterY - deadZone) dy = this.ctl.speed * this.maxSpeedMultiplier;
+                     else if (currentPaddleCenterY > targetPaddleCenterY + deadZone) dy = -this.ctl.speed * this.maxSpeedMultiplier;
+                     if (dy !== 0) this.ctl.move(dy);
+                 } else if (ball.velocity[0] <= 0) { this.reactionTimer = 0; }
+             }
+         }
+
+
+            // --- Event Listeners ---
+            function setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    const key = e.key.toLowerCase();
+                    if (['arrowup', 'arrowdown', 'w', 's', ' '].includes(key)) e.preventDefault();
+                    if(gameRunning) keysPressed[key] = true;
+                });
+                document.addEventListener('keyup', (e) => { keysPressed[e.key.toLowerCase()] = false; });
+                if(startButton) startButton.addEventListener("click", startGame);
+                if(resetButton) resetButton.addEventListener("click", handleResetGame);
+                if(undoButton) undoButton.addEventListener("click", handleUndoPoint);
+                if(toggleMusicButton) toggleMusicButton.addEventListener("click", handleToggleMusic);
+                if(fullscreenButton) fullscreenButton.addEventListener("click", toggleFullscreen);
+                if(musicSelect) musicSelect.addEventListener("change", handleMusicSelection);
+                if(difficultySelect) difficultySelect.addEventListener("change", changeDifficulty);
+                if(possessionToggle) possessionToggle.addEventListener("change", (e) => { ballPosssessionOnScore = e.target.checked; });
+                modeSelectionRadios.forEach(radio => { if(radio) radio.addEventListener('change', handleModeChange); });
+                if(winScoreInput) winScoreInput.addEventListener('change', handleWinScoreChange);
+                if(pointsPerScoreInput) pointsPerScoreInput.addEventListener('change', handlePointsChange);
+                if(player1ColorPicker) player1ColorPicker.addEventListener('input', (e) => { if(player1El) player1El.style.backgroundColor = e.target.value; });
+                if(player2ColorPicker) player2ColorPicker.addEventListener('input', (e) => { if(player2El) player2El.style.backgroundColor = e.target.value; });
+                if(ballColorPicker) ballColorPicker.addEventListener('input', (e) => { if(ballEl) ballEl.style.backgroundColor = e.target.value; });
+                if(backgroundColorPicker) backgroundColorPicker.addEventListener('input', (e) => { if(game) game.style.backgroundColor = e.target.value; });
+                document.addEventListener('fullscreenchange', updateFullscreenButton);
+
+                navLinks.forEach(link => {
+                     if(link) link.addEventListener('click', (e) => {
+                        const href = link.getAttribute('href');
+                        if (!href || href === '#') { e.preventDefault(); return; }
+                        const sectionId = href.substring(1);
+                        const validSections = ['home', 'play', 'devlog', 'tutorial'];
+                        if (validSections.includes(sectionId)) { e.preventDefault(); showSection(sectionId); }
+                    });
+                });
+
+                 const validInitialSections = ['home', 'play', 'devlog', 'tutorial'];
+                 let initialSection = window.location.hash ? window.location.hash.substring(1) : 'home';
+                 if (!validInitialSections.includes(initialSection)) initialSection = 'home';
+                 showSection(initialSection);
+            }
+
+            // --- Page Switching Logic ---
+            function showSection(id) {
+                const sectionMap = { 'home': homepageSection, 'play': gameSection, 'devlog': devlogSection, 'tutorial': tutorialSection };
+                allSections.forEach(section => { if(section) section.style.display = 'none'; });
+                const targetSection = sectionMap[id];
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                     if (window.location.hash !== '#' + id) history.pushState({section: id}, `Section ${id}`, '#' + id);
+                    if (id === 'play') { console.log("Switched to game section."); initializeGame(); }
+                    else if (gameRunning) { pauseGameLoop(); console.log("Game paused due to navigation away."); }
+                } else {
+                    console.error("Attempted to show unknown section:", id);
+                    if (homepageSection) homepageSection.style.display = 'block';
+                     if (window.location.hash !== '#home') history.pushState({section: 'home'}, `Section home`, '#home');
+                }
+                navLinks.forEach(link => {
+                    if(link) link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+                });
+            }
+            window.addEventListener('popstate', (event) => {
+                let sectionId = 'home';
+                if (event.state && event.state.section) sectionId = event.state.section;
+                else { const hash = window.location.hash ? window.location.hash.substring(1) : 'home';
+                       const validSections = ['home', 'play', 'devlog', 'tutorial'];
+                       if (validSections.includes(hash)) sectionId = hash; }
+                console.log("Popstate event, showing section:", sectionId);
+                showSection(sectionId);
+            });
+
+             // --- Game Initialization ---
+             function initializeGame() {
+                 console.log("Initializing game...");
+                 try {
+                     if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+                     gameRunning = false;
+                     if (musicSelect && musicSelect.options.length <= 1) populateMusicSelect();
+                     if(musicSelect) handleMusicSelection();
+                     score = [0, 0]; lastScoreState = null; keysPressed = {}; framesSinceStart = 0;
+                     if (!player1El || !player2El || !ballEl || !game) throw new Error("DOM elements missing for game objects.");
+                     player1 = new Player("player1", "left");
+                     player2 = new Player("player2", "right");
+                     ball = new Ball();
+                     ai = new AI(player2);
+                     if(winScoreInput) handleWinScoreChange({ target: winScoreInput });
+                     if(pointsPerScoreInput) handlePointsChange({ target: pointsPerScoreInput });
+                     if(possessionToggle) ballPosssessionOnScore = possessionToggle.checked;
+                     const checkedMode = document.querySelector('input[name="gameMode"]:checked');
+                     gameMode = checkedMode ? checkedMode.value : '1p';
+                     if(player1ColorPicker && player1El) player1El.style.backgroundColor = player1ColorPicker.value;
+                     if(player2ColorPicker && player2El) player2El.style.backgroundColor = player2ColorPicker.value;
+                     if(ballColorPicker && ballEl) ballEl.style.backgroundColor = ballColorPicker.value;
+                     if(backgroundColorPicker && game) game.style.backgroundColor = backgroundColorPicker.value;
+                      handleModeChange(); resetPaddles(); ball.updateVisual(); updateScoreDisplay(); updateInstructions();
+                      if(undoButton) undoButton.disabled = true; updateFullscreenButton(); updateMusicToggleButton();
+                     console.log("Initialization complete.");
+                 } catch (error) {
+                     console.error("Error during game initialization:", error);
+                     alert(`Initialization error: ${error.message}`);
+                     if(startButton) startButton.disabled = true; if(resetButton) resetButton.disabled = true;
+                 }
+             }
+
+            // --- Music Handling ---
+            function populateMusicSelect() { /* ... as before ... */
+                if (!musicSelect) return;
+                musicSelect.innerHTML = '';
+                musicTracks.forEach(track => {
+                    const option = document.createElement('option');
+                    option.value = track.src; option.textContent = track.name; musicSelect.appendChild(option);
+                });
+            }
+            function handleMusicSelection() { /* ... as before ... */
+                if (!musicSelect || !backgroundMusic) return;
+                const selectedSrc = musicSelect.value; const currentSrc = backgroundMusic.getAttribute('src');
+                if (selectedSrc && (!currentSrc || backgroundMusic.src !== selectedSrc)) {
+                     const wasPlaying = !backgroundMusic.paused; if (wasPlaying) backgroundMusic.pause();
+                     backgroundMusic.src = selectedSrc; console.log(`Music source set to: ${selectedSrc}`);
+                } else if (!selectedSrc && currentSrc) {
+                     backgroundMusic.pause(); backgroundMusic.removeAttribute('src'); backgroundMusic.load(); console.log("Music set to None.");
+                }
+                 updateMusicToggleButton();
+            }
+            function handleToggleMusic() { /* ... as before ... */
+                if (!backgroundMusic) return;
+                if (backgroundMusic.paused && backgroundMusic.src) playMusic(); else pauseMusic();
+            }
+            function playMusic() { /* ... as before ... */
+                 if (!backgroundMusic || !backgroundMusic.src) { console.log("Play clicked, no music source."); updateMusicToggleButton(); return; }
+                 console.log("Attempting play..."); const playPromise = backgroundMusic.play();
+                 if (playPromise !== undefined) { playPromise.then(_ => { console.log("Playback started."); updateMusicToggleButton(); }).catch(error => { console.warn("Playback failed:", error); updateMusicToggleButton(); }); }
+                 else { updateMusicToggleButton(); }
+            }
+            function pauseMusic() { /* ... as before ... */
+                if (!backgroundMusic) return; backgroundMusic.pause(); console.log("Music paused."); updateMusicToggleButton();
+            }
+            function updateMusicToggleButton() { /* ... as before ... */
+                if (!toggleMusicButton || !backgroundMusic) return;
+                toggleMusicButton.textContent = (backgroundMusic.paused || !backgroundMusic.src) ? "Play Music" : "Pause Music";
+                 toggleMusicButton.disabled = !backgroundMusic.src;
+            }
+
+             // --- Fullscreen Handling ---
+            function toggleFullscreen() { /* ... as before ... */
+                 if (!document.fullscreenElement) { const el = gameContainer || document.documentElement; el.requestFullscreen().catch(err => { console.error(`Fullscreen error: ${err.message}`, err); alert(`Fullscreen failed: ${err.message}`); }); }
+                 else { if (document.exitFullscreen) document.exitFullscreen(); }
+            }
+            function updateFullscreenButton() { /* ... as before ... */
+                 if (!fullscreenButton) return; fullscreenButton.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen";
+            }
+
+            // --- Input Handlers ---
+            function handleWinScoreChange(e) { /* ... as before ... */
+                if (!winScoreInput) return; let v = parseInt(e.target.value, 10); const min=parseInt(winScoreInput.min,10)||1; const max=parseInt(winScoreInput.max,10)||1000; if(isNaN(v)||v<min) v=min; winScoreLimit=Math.min(v,max); e.target.value=winScoreLimit; console.log("Win score:", winScoreLimit); updateInstructions();
+            }
+             function handlePointsChange(e) { /* ... as before ... */
+                 if (!pointsPerScoreInput) return; let v = parseInt(e.target.value, 10); const min=parseInt(pointsPerScoreInput.min,10)||1; const max=parseInt(pointsPerScoreInput.max,10)||1000; if(isNaN(v)||v<min) v=min; pointsPerScoreValue=Math.min(v,max); e.target.value=pointsPerScoreValue; console.log("Points/score:", pointsPerScoreValue); updateInstructions();
+             }
+            function handleModeChange() { /* ... as before ... */
+                 const selectedModeInput = document.querySelector('input[name="gameMode"]:checked'); if (!selectedModeInput) return; gameMode = selectedModeInput.value; const is1P = (gameMode === '1p'); if (difficultySelect) { difficultySelect.disabled = !is1P; difficultySelect.style.opacity = is1P ? '1' : '0.5'; difficultySelect.style.cursor = is1P ? 'pointer' : 'not-allowed'; } if (is1P && ai && difficultySelect) changeDifficulty({ target: difficultySelect }); resetPaddles(); if (ball) ball.reset(null); updateInstructions();
+            }
+            function updateInstructions() { /* ... as before ... */
+                 if (!instructionsEl || !winScoreInput || !pointsPerScoreInput || !difficultySelect) return; let text = `Win: ${winScoreLimit} | Pts: ${pointsPerScoreValue} | `; if (gameMode === '1p') { const diffText = difficultySelect.options[difficultySelect.selectedIndex]?.text || difficultySelect.value; text += `P1 [↑][↓]/[W][S] | Fire [Space] | AI: ${diffText}`; } else { text += `P1 [↑][↓] | P2 [W][S] | Fire [Space]`; } instructionsEl.innerHTML = text.replace(/\|/g, '<span style="opacity:0.5; margin: 0 4px;">|</span>');
+            }
+
+            // --- Game Logic Functions ---
+             function startGame() { /* ... as before ... */
+                 if (gameRunning) { console.log("Already running."); return; } console.log(`Starting game... Mode: ${gameMode}`); try { if (!player1 || !player2 || !ball || !ai) { console.error("Objects not ready. Initializing..."); initializeGame(); if (!player1 || !player2 || !ball || !ai) throw new Error("Initialization failed."); } score = [0, 0]; keysPressed = {}; framesSinceStart = 0; lastScoreState = null; if(undoButton) undoButton.disabled = true; updateScoreDisplay(); resetPaddles(); if(player1ColorPicker && player1El) player1El.style.backgroundColor = player1ColorPicker.value; if(player2ColorPicker && player2El) player2El.style.backgroundColor = player2ColorPicker.value; if(ballColorPicker && ballEl) ballEl.style.backgroundColor = ballColorPicker.value; if(backgroundColorPicker && game) game.style.backgroundColor = backgroundColorPicker.value; if (gameMode === '1p' && difficultySelect) changeDifficulty({ target: difficultySelect }); ball.reset(null); gameRunning = true; playMusic(); lastUpdate = performance.now(); if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(update); console.log("Game loop started."); } catch (error) { console.error("Error starting game:", error); alert(`Start failed: ${error.message}`); gameRunning = false; }
+             }
+            function pauseGameLoop(winnerMessage = "") { /* ... as before ... */
+                 const wasRunning = gameRunning; gameRunning = false; if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; console.log("Anim frame cancelled."); } keysPressed = {}; if (wasRunning) pauseMusic(); if (winnerMessage) { console.log("Game ended:", winnerMessage); lastScoreState = null; if(undoButton) undoButton.disabled = true; if (ball) ball.reset(null); updateInstructions(); setTimeout(() => { alert(winnerMessage); }, 50); }
+             }
+            function handleResetGame() { /* ... as before ... */
+                console.log("Reset clicked."); pauseGameLoop(); initializeGame();
+            }
+            function handleUndoPoint() { /* ... as before ... */
+                 if (!lastScoreState) { console.log("Nothing to undo."); return; } console.log("Undoing point..."); const restartLoop = gameRunning; if (restartLoop) { gameRunning = false; if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; } score = [...lastScoreState.score]; updateScoreDisplay(); let server = ballPosssessionOnScore ? (lastScoreState.scorer === 1 ? player2 : player1) : null; if(ball) ball.reset(server); console.log(`Score reverted to ${score[0]}-${score[1]}.`); lastScoreState = null; if(undoButton) undoButton.disabled = true; if (restartLoop) { gameRunning = true; lastUpdate = performance.now(); animationFrameId = requestAnimationFrame(update); console.log("Loop resumed after undo."); }
+             }
+            function resetPaddles() { /* ... as before ... */
+                try { if (player1 && player1.el) { player1.y = (game.clientHeight - player1.height) / 2; player1.el.style.top = `${player1.y}px`; } if (player2 && player2.el) { player2.y = (game.clientHeight - player2.height) / 2; player2.el.style.top = `${player2.y}px`; } } catch(e) { console.error("Error resetting paddles", e); }
+            }
+            function changeDifficulty(event) { /* ... as before ... */
+                if (!event || !event.target) return; const difficulty = event.target.value; if (ai && gameMode === '1p') { ai.setDifficulty(difficulty); console.log("AI difficulty:", difficulty); updateInstructions(); }
+            }
+            function updateScoreDisplay() { /* ... as before ... */
+                if(player1ScoreEl) player1ScoreEl.textContent = score[0]; if(player2ScoreEl) player2ScoreEl.textContent = score[1];
+            }
+             function checkCollisions() { /* ... as before ... */
+                 if (!gameRunning || !ball || ball.owner || !player1 || !player2 || !player1.el || !player2.el) return; const ballBottom = ball.y + ball.size; const ballRight = ball.x + ball.size; const p1Right = player1.el.offsetLeft + player1.width; const p1Bottom = player1.y + player1.height;
+                 if (ball.velocity[0] < 0 && ball.x <= p1Right && ballRight >= player1.el.offsetLeft && ballBottom > player1.y && ball.y < p1Bottom) { const iY = player1.getCenterY() - (ball.y + ball.size / 2); const nY = iY / (player1.height / 2); const angle = nY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = currentBallSpeed * Math.cos(angle); ball.velocity[1] = -currentBallSpeed * Math.sin(angle); ball.x = p1Right + 1; /* console.log("Hit P1"); */ }
+                 else if (ball.velocity[0] > 0 && ballRight >= player2.el.offsetLeft && ball.x <= player2.el.offsetLeft + player2.width && ballBottom > player2.y && ball.y < player2.y + player2.height) { const iY = player2.getCenterY() - (ball.y + ball.size / 2); const nY = iY / (player2.height / 2); const angle = nY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = -currentBallSpeed * Math.cos(angle); ball.velocity[1] = -currentBallSpeed * Math.sin(angle); ball.x = player2.el.offsetLeft - ball.size - 1; /* console.log("Hit P2"); */ }
+             }
+             function checkScored() { /* ... as before ... */
+                 if (!gameRunning || !ball || ball.owner || framesSinceStart < 10) return; const gameWidth = game.clientWidth; let scorer = 0; if (ball.x + ball.size <= 0) scorer = 2; else if (ball.x >= gameWidth) scorer = 1;
+                 if (scorer !== 0) { lastScoreState = { score: [...score], scorer: scorer }; if(undoButton) undoButton.disabled = false; score[scorer - 1] += pointsPerScoreValue; updateScoreDisplay(); framesSinceStart = 0; if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) { const winner = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2'); const msg = `Final Score: ${score[0]} - ${score[1]}`; console.log(`${winner} wins! ${msg}`); triggerWinAnimation(scorer === 1 ? 'left' : 'right'); pauseGameLoop(`${winner} wins! ${msg}`); } else { const server = ballPosssessionOnScore ? (scorer === 1 ? player1 : player2) : null; ball.reset(server); } }
+             }
+            function triggerWinAnimation(winnerSide) { /* ... as before ... */
+                 if (!game) return; const colors = ['var(--win-color1)', 'var(--win-color2)', 'var(--win-color3)', 'var(--win-color4)']; const emitterX = game.clientWidth / 2; const emitterY = game.clientHeight / 2;
+                 for (let i = 0; i < WIN_PARTICLE_COUNT; i++) { const p = document.createElement('div'); p.classList.add('win-particle'); game.appendChild(p); const angle = Math.random() * Math.PI * 2; const speed = 0.8 + Math.random() * 0.7; const duration = 1.5 + Math.random() * 1.0; p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; p.style.left = `${emitterX}px`; p.style.top = `${emitterY}px`; p.style.setProperty('--vx', Math.cos(angle) * speed); p.style.setProperty('--vy', Math.sin(angle) * speed); p.style.animation = `win-explode ${duration}s ease-out forwards`; setTimeout(() => { p.remove(); }, duration * 1000); }
+             }
+
+            // --- Main Game Loop ---
+            function update(time) {
+                if (!gameRunning) { animationFrameId = null; return; }
+                const deltaTime = time - lastUpdate; const cappedDeltaTime = Math.min(deltaTime, 50); lastUpdate = time; framesSinceStart++;
+                try {
+                    if (player1) player1.update(cappedDeltaTime);
+                    if (gameMode === '1p') { if (ai) ai.update(cappedDeltaTime); } else { if (player2) player2.update(cappedDeltaTime); }
+                    if (ball) ball.update(cappedDeltaTime);
+                    checkCollisions(); checkScored();
+                    if (gameRunning) animationFrameId = requestAnimationFrame(update);
+                    else { console.log("Loop ending: gameRunning false."); animationFrameId = null; }
+                } catch (error) { console.error("Error in update loop:", error); alert(`Runtime error: ${error.message}`); pauseGameLoop(); }
+            }
+
+            // --- Initial Setup Call ---
+            setupEventListeners();
+            initializeGame();
+
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
