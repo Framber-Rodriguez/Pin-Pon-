@@ -140,6 +140,26 @@ button:hover { transform:translateY(-2px); }
 .credits-caption { position:absolute; bottom:18px; width:100%; color:#526170; font-size:9px; letter-spacing:.18em; }
 @media(prefers-reduced-motion:reduce) { .menu-court em { animation:none; } #credits-roll.rolling { animation:none; padding-top:80px; } .credits-mask { overflow:auto; } }
 @media(max-width:500px) { #main-menu h1 { font-size:64px; } .intro-caption span { font-size:8px; letter-spacing:.1em; } #game-toolbar button { font-size:12px; } }
+
+/* Cinematic arena: color customization controls the surface below the lighting. */
+#game-container { max-width:900px; }
+#game-header { max-width:900px; }
+#game { height:480px; background-image:radial-gradient(ellipse at 50% 42%,#73eaff10,transparent 70%),linear-gradient(#69dcef08 1px,transparent 1px),linear-gradient(90deg,#69dcef08 1px,transparent 1px); background-size:auto,44px 44px,44px 44px; border:2px solid #51dce875; border-radius:18px; box-shadow:0 0 0 7px #2ac3dd05,0 0 38px #32d8ee18,inset 0 0 65px #020b1675,0 25px 90px #0009; }
+#game::before { content:''; position:absolute; inset:20px; border:1px solid #c7f6ff10; border-radius:8px; pointer-events:none; }
+#game::after { border-left:2px dashed #7ee8f23d; box-shadow:0 0 12px #49dbec18; }
+.player { border-radius:7px; background-image:linear-gradient(90deg,#ffffff60,transparent 65%); box-shadow:0 0 12px currentColor,0 0 32px currentColor; z-index:3; }
+#ball { background-image:radial-gradient(circle at 32% 28%,#fff9,transparent 70%); box-shadow:0 0 12px currentColor,0 0 30px currentColor; z-index:4; }
+#score { top:22px; font-size:38px; letter-spacing:.13em; font-weight:300; color:#d8f6ff; padding:7px 20px; background:#06131e85; border:1px solid #7bddf022; border-radius:12px; backdrop-filter:blur(8px); text-shadow:0 0 20px #a0edff50; }
+.ball-trail { position:absolute; border-radius:50%; pointer-events:none; z-index:2; background:#e8fcff; width:12px; height:12px; }
+.impact-ring { position:absolute; border:2px solid var(--impact-color); border-radius:50%; width:18px; height:18px; margin:-9px; pointer-events:none; z-index:5; animation:arena-impact .42s ease-out forwards; box-shadow:0 0 14px var(--impact-color); }
+@keyframes arena-impact { from { transform:scale(.4); opacity:.95; } to { transform:scale(3.5); opacity:0; } }
+#game-toolbar { display:flex; width:100%; justify-content:space-between; gap:12px; }
+#game-toolbar button { font-size:11px; letter-spacing:.08em; padding:11px 16px; }
+#controls { margin-top:8px; background:linear-gradient(130deg,#102637,#091421); padding:16px; }
+#controls #modeSelection { display:flex; justify-content:center; align-items:center; gap:8px; }
+#instructions { color:#729dad; font-size:11px; margin-top:15px; }
+@media(max-width:600px) { #game { height:390px; } #score { font-size:26px; top:14px; } #controls { padding:10px; } }
+@media(prefers-reduced-motion:reduce) { .ball-trail { display:none; } .impact-ring { animation:none; display:none; } }
 </style>
 </head>
 <body>
@@ -189,8 +209,8 @@ button:hover { transform:translateY(-2px); }
                  <div> <label> <input type="checkbox" id="possessionToggle" checked> Serve on Score </label> </div>
                  <div hidden> <label for="player1ColorPicker">P1 Color:</label> <input type="color" id="player1ColorPicker" value="#61dafb"> </div>
                  <div hidden> <label for="player2ColorPicker">P2/AI Color:</label> <input type="color" id="player2ColorPicker" value="#f0db4f"> </div>
-                 <div hidden> <label for="ballColorPicker">Ball Color:</label> <input type="color" id="ballColorPicker" value="#ff5733"> </div>
-                 <div hidden> <label for="backgroundColorPicker">BG Color:</label> <input type="color" id="backgroundColorPicker" value="#1e1e1e"> </div>
+                 <div hidden> <label for="ballColorPicker">Ball Color:</label> <input type="color" id="ballColorPicker" value="#e8fcff"> </div>
+                 <div hidden> <label for="backgroundColorPicker">BG Color:</label> <input type="color" id="backgroundColorPicker" value="#071e2b"> </div>
                  <div hidden>
                     <label for="musicSelect">Music:</label>
                     <select id="musicSelect">
@@ -254,13 +274,52 @@ button:hover { transform:translateY(-2px); }
                  alert("Error initializing game elements. Check console (F12).");
                  return;
               }
-             // --- Classes (Player, Ball, AI - Unchanged structurally) ---
+             // Reuse a small trail pool; no per-frame DOM allocation.
+            const trailHistory = [];
+            const trailNodes = Array.from({ length: 12 }, () => {
+                const el = document.createElement('div');
+                el.className = 'ball-trail'; el.style.opacity = '0';
+                el.setAttribute('aria-hidden', 'true'); game.appendChild(el); return el;
+            });
+            function clearBallTrail() {
+                trailHistory.length = 0;
+                trailNodes.forEach(el => { el.style.opacity = '0'; });
+            }
+            function syncArenaColors() {
+                player1El.style.color = player1ColorPicker.value;
+                player2El.style.color = player2ColorPicker.value;
+                ballEl.style.color = ballColorPicker.value;
+            }
+            function renderBallTrail(currentBall) {
+                syncArenaColors();
+                if (!gameRunning || currentBall.owner) { clearBallTrail(); return; }
+                trailHistory.unshift({ x: currentBall.x + BALL_SIZE / 2, y: currentBall.y + BALL_SIZE / 2 });
+                trailHistory.length = Math.min(trailHistory.length, trailNodes.length + 1);
+                trailNodes.forEach((el, i) => {
+                    const point = trailHistory[i + 1];
+                    if (!point) { el.style.opacity = '0'; return; }
+                    const size = Math.max(3, 12 - i * .7);
+                    el.style.width = el.style.height = size + 'px';
+                    el.style.left = point.x - size / 2 + 'px';
+                    el.style.top = point.y - size / 2 + 'px';
+                    el.style.backgroundColor = ballColorPicker.value;
+                    el.style.opacity = String(.38 * (1 - i / trailNodes.length));
+                });
+            }
+            function emitImpact(x, y, color) {
+                const ring = document.createElement('div'); ring.className = 'impact-ring';
+                ring.style.left = x + 'px'; ring.style.top = y + 'px';
+                ring.style.setProperty('--impact-color', color);
+                game.appendChild(ring); setTimeout(() => ring.remove(), 450);
+            }
+            // --- Classes (Player, Ball, AI - Unchanged structurally) ---
               class Player { /* ... Player class code ... */ constructor(id, side) { this.el = document.getElementById(id); if (!this.el) { throw new Error(`Player element not found: ${id}`); } this.side = side; this.height = PADDLE_HEIGHT; this.width = PADDLE_WIDTH; this.speed = PLAYER_SPEED; this.y = (game.clientHeight - this.height) / 2; } update(deltaTime) { let dy = 0; if (!gameRunning) return; if (gameMode === '1p') { if (this.side === 'left') { if (keysPressed['arrowup'] || keysPressed['w']) { dy = -this.speed; } if (keysPressed['arrowdown'] || keysPressed['s']) { dy = this.speed; } } } else { if (this.side === 'left') { if (keysPressed['arrowup']) { dy = -this.speed; } if (keysPressed['arrowdown']) { dy = this.speed; } } else if (this.side === 'right') { if (keysPressed['w']) { dy = -this.speed; } if (keysPressed['s']) { dy = this.speed; } } } if (dy !== 0) { this.move(dy); } if (keysPressed[' '] && ball.owner === this) { this.fire(); } } move(dy) { const newY = this.y + dy; const maxY = game.clientHeight - this.height; this.y = Math.max(0, Math.min(newY, maxY)); this.el.style.top = `${this.y}px`; } fire() { if (ball.owner === this) { let angle = (Math.random() - 0.5) * Math.PI / 6; if (gameMode === '1p' && this.side === "right" && player1) { const playerCenterY = player1.y + player1.height / 2; const paddleCenterY = this.y + this.height / 2; const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2; const deltaY = targetY - (this.y + this.height / 2); const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8); angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8)); } const directionX = this.side === "left" ? 1 : -1; ball.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; ball.owner = null; } } getCenterY() { return this.y + this.height / 2; } }
-              class Ball { /* ... Ball class code ... */ constructor() { this.el = ballEl; if(!this.el) { throw new Error("Ball element not found"); } this.size = BALL_SIZE; this.reset(null); } reset(ownerInstance = null) { this.owner = ownerInstance; currentBallSpeed = INITIAL_BALL_SPEED; if (this.owner) { this.followOwner(); this.velocity = [0, 0]; } else { this.x = (game.clientWidth - this.size) / 2; this.y = (game.clientHeight - this.size) / 2; const angle = (Math.random() * Math.PI / 2) - Math.PI / 4; const directionX = Math.random() < 0.5 ? 1 : -1; this.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; this.owner = null; } this.updateVisual(); } update(deltaTime) { if (!gameRunning && !this.owner) return; if (this.owner) { this.followOwner(); } else { this.x += this.velocity[0]; this.y += this.velocity[1]; if (this.y <= 0) { this.y = 0; this.velocity[1] *= -1; } else if (this.y >= game.clientHeight - this.size) { this.y = game.clientHeight - this.size; this.velocity[1] *= -1; } } this.updateVisual(); } followOwner() { if (!this.owner) return; const ownerY = this.owner.y; const ownerCenterY = ownerY + this.owner.height / 2; this.y = ownerCenterY - this.size / 2; if (this.owner.side === "left") { this.x = this.owner.width + 10 + 5; } else { this.x = game.clientWidth - this.owner.width - 10 - this.size - 5; } } updateVisual() { if (this.el) { this.el.style.left = `${this.x}px`; this.el.style.top = `${this.y}px`; } } }
+              class Ball { /* ... Ball class code ... */ constructor() { this.el = ballEl; if(!this.el) { throw new Error("Ball element not found"); } this.size = BALL_SIZE; this.reset(null); } reset(ownerInstance = null) { clearBallTrail(); this.owner = ownerInstance; currentBallSpeed = INITIAL_BALL_SPEED; if (this.owner) { this.followOwner(); this.velocity = [0, 0]; } else { this.x = (game.clientWidth - this.size) / 2; this.y = (game.clientHeight - this.size) / 2; const angle = (Math.random() * Math.PI / 2) - Math.PI / 4; const directionX = Math.random() < 0.5 ? 1 : -1; this.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; this.owner = null; } this.updateVisual(); } update(deltaTime) { if (!gameRunning && !this.owner) return; if (this.owner) { this.followOwner(); } else { this.x += this.velocity[0]; this.y += this.velocity[1]; if (this.y <= 0) { this.y = 0; emitImpact(this.x + this.size / 2, 0, ballColorPicker.value); this.velocity[1] *= -1; } else if (this.y >= game.clientHeight - this.size) { this.y = game.clientHeight - this.size; emitImpact(this.x + this.size / 2, game.clientHeight, ballColorPicker.value); this.velocity[1] *= -1; } } this.updateVisual(); } followOwner() { if (!this.owner) return; const ownerY = this.owner.y; const ownerCenterY = ownerY + this.owner.height / 2; this.y = ownerCenterY - this.size / 2; if (this.owner.side === "left") { this.x = this.owner.width + 10 + 5; } else { this.x = game.clientWidth - this.owner.width - 10 - this.size - 5; } } updateVisual() { if (this.el) { this.el.style.left = `${this.x}px`; this.el.style.top = `${this.y}px`; renderBallTrail(this); } } }
               class AI { /* ... AI class code (speed change applied in setDifficulty) ... */ constructor(playerToControl) { this.ctl = playerToControl; this.difficultyFactor = 0.7; this.reactionTimer = 0; this.reactionDelay = 150; this.fireDelay = 500; this.fireTimer = 0; this.predictiveError = 0.1; this.maxSpeedMultiplier = 1.0; } setDifficulty(level) { /* console.log(`AI Difficulty set to: ${level}`); */ switch(level) { case 'easy': this.difficultyFactor = 0.4; this.reactionDelay = 300; this.fireDelay = 800; this.predictiveError = 0.3; this.maxSpeedMultiplier = 1.0; break; case 'normal': this.difficultyFactor = 0.7; this.reactionDelay = 180; this.fireDelay = 600; this.predictiveError = 0.15; this.maxSpeedMultiplier = 1.0; break; case 'hard': this.difficultyFactor = 1.0; this.reactionDelay = 100; this.fireDelay = 400; this.predictiveError = 0.08; this.maxSpeedMultiplier = 1.2; break; case 'veryHard': this.difficultyFactor = 1.3; this.reactionDelay = 50; this.fireDelay = 250; this.predictiveError = 0.04; this.maxSpeedMultiplier = 1.4; break; case 'impossible': this.difficultyFactor = 1.8; this.reactionDelay = 0; this.fireDelay = 150; this.predictiveError = 0.01; this.maxSpeedMultiplier = 1.5; break; } /* console.log(` -> Speed Multiplier: ${this.maxSpeedMultiplier}`); */ } update(deltaTime) { /* ... AI update logic ... */ if (!gameRunning) return; if (ball.owner === this.ctl) { this.fireTimer += deltaTime; if (this.fireTimer >= this.fireDelay) { this.ctl.fire(); this.fireTimer = 0; } return; } else { this.fireTimer = 0; } this.reactionTimer += deltaTime; if (this.reactionTimer >= this.reactionDelay && ball.velocity[0] > 0) { this.reactionTimer = 0; const distanceToPaddle = game.clientWidth - this.ctl.width - 10 - ball.x; const ballSpeedX = Math.max(Math.abs(ball.velocity[0]), 1); const timeToReach = distanceToPaddle / ballSpeedX; let predictedBallY = ball.y + ball.velocity[1] * timeToReach; const errorAmount = (Math.random() - 0.5) * 2 * this.predictiveError * game.clientHeight; predictedBallY += errorAmount; if (predictedBallY < 0 || predictedBallY > game.clientHeight - ball.size) { if (predictedBallY < 0) { predictedBallY = Math.abs(predictedBallY); } else { predictedBallY = (game.clientHeight - ball.size) - (predictedBallY - (game.clientHeight - ball.size)); } } const targetY = Math.max(ball.size / 2, Math.min(predictedBallY, game.clientHeight - ball.size / 2)); const paddleCenter = this.ctl.getCenterY(); const targetPaddleCenter = targetY; let dy = 0; const deadZone = this.ctl.height * 0.1 * (1 / this.difficultyFactor) ; if (paddleCenter < targetPaddleCenter - deadZone) { dy = this.ctl.speed * this.maxSpeedMultiplier; } else if (paddleCenter > targetPaddleCenter + deadZone) { dy = -this.ctl.speed * this.maxSpeedMultiplier; } if (dy !== 0) { this.ctl.move(dy); } } } }
             // --- Intro, menu and object-based customization ---
             let editingColors = false;
             let selectedColorTarget = null;
+            let creditsCloseTimer = null;
             const introScreen = document.getElementById('intro-screen');
             const menuScreen = document.getElementById('main-menu');
             const introVideo = document.getElementById('intro-video');
@@ -278,6 +337,7 @@ button:hover { transform:translateY(-2px); }
                 { el: game, picker: backgroundColorPicker, name: 'Table' }
             ];
             function showMenu() {
+                clearTimeout(creditsCloseTimer); creditsCloseTimer = null;
                 pauseGameLoop(); finishCustomize(); introVideo.pause();
                 introScreen.hidden = true; menuScreen.hidden = false; creditsScreen.hidden = true;
                 creditsRoll.classList.remove('rolling'); gameContainer.hidden = true; gameHeader.hidden = true;
@@ -314,7 +374,7 @@ button:hover { transform:translateY(-2px); }
             selectedColor.addEventListener('input', () => {
                 if (!selectedColorTarget) return;
                 selectedColorTarget.picker.value = selectedColor.value;
-                selectedColorTarget.el.style.backgroundColor = selectedColor.value;
+                selectedColorTarget.el.style.backgroundColor = selectedColor.value; syncArenaColors();
             });
             targets.forEach(t => {
                 t.el.tabIndex = 0;
@@ -336,6 +396,8 @@ button:hover { transform:translateY(-2px); }
                 creditsRoll.classList.remove('rolling');
                 void creditsRoll.offsetWidth;
                 creditsRoll.classList.add('rolling');
+                clearTimeout(creditsCloseTimer);
+                creditsCloseTimer = setTimeout(showMenu, 36000);
                 document.getElementById('close-credits').focus();
             });
             document.getElementById('close-credits').addEventListener('click', showMenu);
@@ -569,7 +631,7 @@ button:hover { transform:translateY(-2px); }
              function resetPaddles() { /* ... same ... */ try { if (player1) { player1.y = (game.clientHeight - player1.height) / 2; player1.el.style.top = `${player1.y}px`; } if (player2) { player2.y = (game.clientHeight - player2.height) / 2; player2.el.style.top = `${player2.y}px`; } } catch(e) { console.error("Error resetting paddles", e); } }
              function changeDifficulty(event) { /* ... same ... */ const difficulty = event.target.value; if (ai && gameMode === '1p') { ai.setDifficulty(difficulty); updateInstructions(); } }
              function updateScoreDisplay() { /* ... same ... */ player1ScoreEl.textContent = score[0]; player2ScoreEl.textContent = score[1]; }
-             function checkCollisions() { /* ... same ... */ if (!gameRunning || ball.owner) return; if (ball.velocity[0] < 0 && ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 && ball.x >= player1.el.offsetLeft && ball.y + ball.size > player1.y && ball.y < player1.y + player1.height) { const intersectY = player1.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player1.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); ball.x = player1.el.offsetLeft + player1.width + 1; } else if (ball.velocity[0] > 0 && ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 && ball.x <= player2.el.offsetLeft + player2.width && ball.y + ball.size > player2.y && ball.y < player2.y + player2.height) { const intersectY = player2.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player2.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); ball.x = player2.el.offsetLeft - ball.size - 1; } }
+             function checkCollisions() { /* ... same ... */ if (!gameRunning || ball.owner) return; if (ball.velocity[0] < 0 && ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 && ball.x >= player1.el.offsetLeft && ball.y + ball.size > player1.y && ball.y < player1.y + player1.height) { const intersectY = player1.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player1.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); ball.x = player1.el.offsetLeft + player1.width + 1; emitImpact(ball.x, ball.y + ball.size / 2, player1ColorPicker.value); } else if (ball.velocity[0] > 0 && ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 && ball.x <= player2.el.offsetLeft + player2.width && ball.y + ball.size > player2.y && ball.y < player2.y + player2.height) { const intersectY = player2.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player2.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); ball.x = player2.el.offsetLeft - ball.size - 1; emitImpact(ball.x + ball.size, ball.y + ball.size / 2, player2ColorPicker.value); } }
              function checkScored() { /* ... same ... */ if (!gameRunning || ball.owner || framesSinceStart < 5) return; const gameWidth = game.clientWidth; let scorer = 0; if (ball.x <= 0) { scorer = 2; } else if (ball.x + ball.size >= gameWidth) { scorer = 1; } if (scorer !== 0) { lastScoreState = { score: [...score], scorer: scorer }; undoButton.disabled = false; if (scorer === 1) { score[0] += pointsPerScoreValue; } else { score[1] += pointsPerScoreValue; } updateScoreDisplay(); if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) { const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2'); const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`; console.log(`${winnerName} wins! ${finalScoreMsg}`); triggerWinAnimation(scorer === 1 ? 'left' : 'right'); pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`); } else { const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null; ball.reset(server); } } }
              function triggerWinAnimation(winnerSide) { /* ... same ... */ const colors = ['var(--win-color1)', 'var(--win-color2)', 'var(--win-color3)', 'var(--win-color4)']; const emitterX = game.clientWidth / 2; const emitterY = game.clientHeight / 2; for (let i = 0; i < WIN_PARTICLE_COUNT; i++) { const particle = document.createElement('div'); particle.classList.add('win-particle'); game.appendChild(particle); const angle = Math.random() * Math.PI * 2; const speed = 0.8 + Math.random() * 0.7; const duration = 1.5 + Math.random() * 1.0; particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; particle.style.left = `${emitterX}px`; particle.style.top = `${emitterY}px`; particle.style.setProperty('--vx', Math.cos(angle) * speed); particle.style.setProperty('--vy', Math.sin(angle) * speed); particle.style.animation = `win-explode ${duration}s ease-out forwards`; setTimeout(() => { particle.remove(); }, duration * 1000); } }
              // --- Game Loop --- (Unchanged)
@@ -580,3 +642,4 @@ button:hover { transform:translateY(-2px); }
     </script>
 </body>
 </html>
+
