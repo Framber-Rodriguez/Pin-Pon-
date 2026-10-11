@@ -160,6 +160,8 @@ button:hover { transform:translateY(-2px); }
 #instructions { color:#729dad; font-size:11px; margin-top:15px; }
 @media(max-width:600px) { #game { height:390px; } #score { font-size:26px; top:14px; } #controls { padding:10px; } }
 @media(prefers-reduced-motion:reduce) { .ball-trail { display:none; } .impact-ring { animation:none; display:none; } }
+#game-toolbar #stopButton { border-color:#65dbe75c; min-width:95px; }
+@media(max-width:500px) { #game-toolbar { gap:5px; } #game-toolbar button { padding:10px 8px; font-size:10px; } #game-toolbar #stopButton { min-width:70px; } }
 </style>
 </head>
 <body>
@@ -188,7 +190,7 @@ button:hover { transform:translateY(-2px); }
 <header id="game-header" hidden><span class="eyebrow">FRAMBER RODRIGUEZ</span><h1>PIN-PON</h1><p>↑ / ↓ or W / S to move · Space to serve · Drag to play on touchscreens</p></header>
     <audio id="backgroundMusic" loop></audio>
     <div id="game-container" hidden>
-<div id="game-toolbar"><button id="back-menu">Main Menu</button><button id="customize-button">Customize Colors</button></div>
+<div id="game-toolbar"><button id="back-menu">Main Menu</button><button id="stopButton" disabled>STOP</button><button id="customize-button">Customize Colors</button></div>
 <div id="color-editor" hidden><p id="color-hint">Select the table, ball or either paddle.</p><label id="selected-color-label" for="selected-color" hidden>Selected object color</label><input id="selected-color" type="color" hidden><button id="finish-customize">Done</button></div>
         <div id="game">
             <div id="score" role="status" aria-live="polite"><span id="player1Score">0</span> - <span id="player2Score">0</span></div>
@@ -219,7 +221,7 @@ button:hover { transform:translateY(-2px); }
              </div>
              </details><hr style="margin: 8px 0; border-color: #555;">
             <button id="startButton">START MATCH</button>
-            <button id="resetButton">Stop & Reset</button>
+            <button id="resetButton">RESET</button>
             <button id="undoButton" disabled>Undo Point</button>
             <button id="toggleMusicButton" hidden>Play Music</button> <button id="fullscreenButton">Fullscreen</button> <div id="instructions"> </div>
         </div>
@@ -233,6 +235,8 @@ button:hover { transform:translateY(-2px); }
             const ballEl = document.getElementById("ball");
             const controlsEl = document.getElementById("controls");
             const startButton = document.getElementById("startButton");
+            const stopButton = document.getElementById('stopButton');
+            let canResumeMatch = false;
             const resetButton = document.getElementById("resetButton");
             const undoButton = document.getElementById("undoButton");
             const difficultySelect = document.getElementById("difficultySelect");
@@ -344,6 +348,7 @@ button:hover { transform:translateY(-2px); }
                 document.getElementById('menu-play').focus();
             }
             function showGame() {
+                canResumeMatch = false; stopButton.disabled = true; stopButton.textContent = "STOP";
                 introScreen.hidden = true; menuScreen.hidden = true; creditsScreen.hidden = true;
                 gameContainer.hidden = false; gameHeader.hidden = false;
                 resetPaddles(); ball.reset(null);
@@ -424,6 +429,10 @@ button:hover { transform:translateY(-2px); }
                  document.addEventListener('keyup', (e) => { if(gameRunning) keysPressed[e.key.toLowerCase()] = false; });
                  startButton.addEventListener("click", startGame);
                  resetButton.addEventListener("click", handleResetGame);
+                 stopButton.addEventListener('click', () => {
+                     if (gameRunning) pauseGameLoop();
+                     else if (canResumeMatch) resumeMatch();
+                 });
                  undoButton.addEventListener("click", handleUndoPoint);
                  toggleMusicButton.addEventListener("click", handleToggleMusic); // Updated handler name
                  fullscreenButton.addEventListener("click", toggleFullscreen);   // NEW Fullscreen handler
@@ -441,6 +450,7 @@ button:hover { transform:translateY(-2px); }
                  document.addEventListener('fullscreenchange', updateFullscreenButton);
              }
              function initializeGame() {
+                 canResumeMatch = false; stopButton.disabled = true; stopButton.textContent = "STOP";
                  console.log("Initializing game...");
                  try {
                      if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
@@ -584,7 +594,15 @@ button:hover { transform:translateY(-2px); }
              function handlePointsChange(e) { /* ... same ... */ let newValue = parseInt(e.target.value, 10); if (isNaN(newValue) || newValue < 1) { newValue = 1; } const maxVal = parseInt(pointsPerScoreInput.max, 10) || 1000; pointsPerScoreValue = Math.min(newValue, maxVal); e.target.value = pointsPerScoreValue; console.log("Points per score set to:", pointsPerScoreValue); updateInstructions(); }
              function handleModeChange() { /* ... same ... */ const selectedMode = document.querySelector('input[name="gameMode"]:checked').value; gameMode = selectedMode; const is1P = (gameMode === '1p'); difficultySelect.disabled = !is1P; difficultySelect.style.opacity = is1P ? '1' : '0.5'; difficultySelect.style.cursor = is1P ? 'pointer' : 'not-allowed'; if (is1P && ai) { changeDifficulty({ target: difficultySelect }); } resetPaddles(); if (ball) ball.reset(null); updateInstructions(); }
              function updateInstructions() { /* ... same ... */ let text = `Win: ${winScoreLimit} | Pts: ${pointsPerScoreValue} | `; if (gameMode === '1p') { const difficultyText = difficultySelect.options[difficultySelect.selectedIndex].text; text += `P1 [↑][↓] | Fire [Space] | AI: ${difficultyText}`; } else { text += `P1 [↑][↓] | P2 [W][S] | Fire [Space]`; } instructionsEl.innerHTML = text.replace(/\|/g, '<span style="opacity:0.5; margin: 0 4px;">|</span>'); }
+             function resumeMatch() {
+                 if (!canResumeMatch || gameRunning) return;
+                 if (editingColors) finishCustomize();
+                 canResumeMatch = false; gameRunning = true; keysPressed = {};
+                 lastUpdate = performance.now(); stopButton.textContent = 'STOP'; stopButton.disabled = false;
+                 playMusic(); animationFrameId = requestAnimationFrame(update);
+             }
              function startGame() {
+                 if (canResumeMatch) { resumeMatch(); return; }
                  if (editingColors) finishCustomize(); // Modified to play music on start
                  if (gameRunning) { return; }
                  console.log(`Starting game... Mode: ${gameMode}, Difficulty: ${gameMode === '1p' ? difficultySelect.value : 'N/A'}`);
@@ -595,7 +613,7 @@ button:hover { transform:translateY(-2px); }
                      player1El.style.backgroundColor = player1ColorPicker.value; player2El.style.backgroundColor = player2ColorPicker.value; ballEl.style.backgroundColor = ballColorPicker.value; game.style.backgroundColor = backgroundColorPicker.value;
                      if (gameMode === '1p') { changeDifficulty({ target: difficultySelect }); }
                      ball.reset(null);
-                     gameRunning = true;
+                     gameRunning = true; stopButton.disabled = false; stopButton.textContent = 'STOP';
                      // Attempt to play selected music on game start
                      playMusic(); // Uses the function which handles 'None' selection etc.
                      lastUpdate = performance.now();
@@ -607,8 +625,10 @@ button:hover { transform:translateY(-2px); }
              function pauseGameLoop(winnerMessage = "") { // Modified to pause music on win/stop
                  if (!gameRunning && !winnerMessage) return;
                  console.log("Pausing game loop.");
-                 const wasRunning = gameRunning; // Check if it was running before setting false
-                 gameRunning = false;
+                 const wasRunning = gameRunning;
+                 gameRunning = false; clearBallTrail();
+                 if (wasRunning && !winnerMessage) { canResumeMatch = true; stopButton.textContent = 'RESUME'; }
+                 if (winnerMessage) { canResumeMatch = false; stopButton.disabled = true; stopButton.textContent = 'STOP'; }
                  if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
                  keysPressed = {};
                  // Pause music only if game was actually running or ending
@@ -642,4 +662,5 @@ button:hover { transform:translateY(-2px); }
     </script>
 </body>
 </html>
+
 
