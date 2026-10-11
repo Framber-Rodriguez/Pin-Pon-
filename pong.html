@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong Game - Music & Fullscreen</title>
+    <title>PIN-PON | Framber Rodriguez</title>
     <style>
         /* --- CSS (Minor adjustments possible for new controls) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -86,24 +86,88 @@ body { background: #050a17; }
 #color-editor p { margin: 8px; }
 #game-toolbar { margin-bottom: 12px; }
 @media(max-width: 500px) { #game { height: 360px; } }
+
+body { margin:0; background:#060b14; color:#eff7ff; font-family: "Segoe UI", sans-serif; }
+button { border:1px solid #ffffff26; font-family:inherit; transition: transform .2s, background .2s; }
+button:focus-visible { outline:3px solid #b0f6ff; outline-offset:5px; }
+button:hover { transform:translateY(-2px); }
+#intro-screen { padding:0; background:#030710; }
+#intro-screen video { width:100%; height:100%; max-height:none; border-radius:0; object-fit:contain; }
+.intro-caption { position:absolute; bottom:28px; left:5vw; right:5vw; display:flex; justify-content:space-between; align-items:center; gap:12px; color:#ffffff8c; font-size:11px; letter-spacing:.2em; }
+#intro-start { background:#07101caa; border-color:#ffffff30; color:white; font-size:11px; letter-spacing:.12em; padding:12px 18px; }
+#main-menu { overflow:hidden; background: radial-gradient(ellipse at 70% 60%,#0b3545 0%,#091423 40%,#050911 80%); padding:clamp(20px,5vw,70px); }
+#main-menu::before { content:''; position:absolute; inset:0; background:linear-gradient(110deg,#050911cc,transparent 75%); z-index:1; }
+.menu-content { position:relative; z-index:2; width:min(650px,100%); }
+.eyebrow { font-size:11px; font-weight:600; letter-spacing:.3em; color:#73daef; }
+#main-menu h1 { font-size:clamp(58px,12vw,132px); line-height:1.05; margin:20px 0; font-weight:900; letter-spacing:-.055em; color:#e9faff; text-shadow:0 0 60px #53d8ec50; }
+#main-menu h1 span { color:#57d7eb; }
+#main-menu .menu-tagline { margin:0 auto 38px; font-size:15px; color:#8eabbd; }
+.menu-buttons { display:flex; flex-direction:column; gap:10px; width:min(300px,100%); margin:auto; }
+.menu-action { width:100%; background:#68e3ef; color:#03131e; border:0; padding:18px 26px; font-weight:800; font-size:18px; letter-spacing:.16em; border-radius:5px; min-width:0; box-shadow:0 10px 40px #38cee820; display:flex; align-items:center; justify-content:space-between; }
+.menu-action:hover { background:#9bf4fa; }
+.menu-secondary { width:100%; border-radius:5px; padding:14px; background:#0e213166; color:#c3d8e4; font-size:11px; letter-spacing:.18em; }
+#main-menu .creator-line { font-size:9px; color:#6c8596; letter-spacing:.16em; margin:34px auto 0; }
+.creator-line strong { color:#aec8d5; display:block; font-size:11px; margin-top:7px; }
+.menu-corner { position:absolute; bottom:24px; left:32px; font-size:9px; letter-spacing:.18em; color:#6b94a2; z-index:2; }
+.menu-court { position:absolute; width:900px; height:550px; border:2px solid #46dbeb30; background:linear-gradient(90deg,#0f41503b,#06111b); transform:perspective(600px) rotateX(52deg) rotateZ(-22deg); top:40%; left:20%; box-shadow:0 0 100px #36bfd811; border-radius:10px; }
+.menu-court::before { content:''; position:absolute; left:50%; height:100%; border-left:2px dashed #5ddbe633; }
+.menu-court i,.menu-court b { position:absolute; width:14px; height:100px; border-radius:8px; top:35%; background:#4fe3ee; box-shadow:0 0 40px #4fe3ee70; }
+.menu-court i { left:25px; }.menu-court b { right:25px; background:#f7a869; }
+.menu-court em { position:absolute; width:18px; height:18px; border-radius:50%; top:50%; background:white; box-shadow:0 0 25px #9feefb; animation:menu-rally 7s ease-in-out infinite alternate; }
+@keyframes menu-rally { from { left:8%; top:20%; } to { left:89%; top:70%; } }
+#game-header { margin:20px auto; width:95%; max-width:700px; }
+#game-header h1 { letter-spacing:.08em; font-size:30px; margin:6px; }
+#game-header p { font-size:12px; color:#87a2b4; }
+#game { border-color:#8dbcc84d; border-radius:12px; box-shadow:0 20px 80px #0007; }
+#controls { background:#0d1927; border:1px solid #223548; border-radius:12px; }
+#controls label { background:transparent; border:0; color:#9bb5c6; }
+#controls button,#game-toolbar button { background:#142a3c; color:#c5e5ee; border-color:#315067; border-radius:6px; }
+#controls #startButton { background:#68e3ef; color:#03131e; font-weight:800; }
+#settings-panel { border-top:1px solid #ffffff12; padding-top:12px; }
+#settings-panel summary { cursor:pointer; font-size:11px; letter-spacing:.12em; color:#9bc0d2; padding:8px; }
+#color-editor { background:#0d1927; border-color:#315067; font-size:13px; }
+#credits-screen { position:fixed; inset:0; z-index:110; background:#020408; text-align:center; overflow:hidden; }
+#close-credits { position:absolute; top:22px; left:24px; z-index:2; background:#111a25; color:#b6ccdb; font-size:11px; letter-spacing:.12em; padding:12px; }
+.credits-mask { height:100%; overflow:hidden; mask-image:linear-gradient(transparent,black 15%,black 85%,transparent); }
+#credits-roll { margin:auto; width:min(540px,90%); padding-top:100vh; padding-bottom:100vh; }
+#credits-roll.rolling { animation:credits-scroll 36s linear forwards; }
+@keyframes credits-scroll { from { transform:translateY(0); } to { transform:translateY(-100%); } }
+#credits-roll h2 { font-size:clamp(50px,10vw,84px); color:#81e7ef; letter-spacing:.04em; margin:30px 0 75px; }
+#credits-roll h3 { font-size:28px; font-weight:500; margin:16px 0 80px; }
+#credits-roll p { color:#c2cdd8; font-size:16px; line-height:2; margin:16px 0 75px; }
+#credits-roll .credits-role { font-size:10px; color:#6dbdcf; letter-spacing:.25em; margin-bottom:14px; }
+#credits-roll .credits-end { color:#546e80; font-size:11px; letter-spacing:.2em; }
+.credits-caption { position:absolute; bottom:18px; width:100%; color:#526170; font-size:9px; letter-spacing:.18em; }
+@media(prefers-reduced-motion:reduce) { .menu-court em { animation:none; } #credits-roll.rolling { animation:none; padding-top:80px; } .credits-mask { overflow:auto; } }
+@media(max-width:500px) { #main-menu h1 { font-size:64px; } .intro-caption span { font-size:8px; letter-spacing:.1em; } #game-toolbar button { font-size:12px; } }
 </style>
 </head>
 <body>
 <section id="intro-screen" aria-label="Pong introduction">
-<video id="intro-video" autoplay muted playsinline preload="auto" aria-label="Animated Pong rally"><source src="assets/pong-intro.mp4" type="video/mp4"></video>
-<h1>PIN-PON</h1><button class="menu-action" id="intro-start">START</button>
+<video id="intro-video" autoplay muted playsinline preload="auto" aria-label="Ten-second cinematic Pong introduction"><source src="assets/pong-intro-v2.mp4" type="video/mp4"></video>
+<div class="intro-caption"><span>FRAMBER RODRIGUEZ PRESENTS</span><button id="intro-start">SKIP INTRO ↗</button></div>
 </section>
 <section id="main-menu" hidden aria-label="Main menu">
-<p>THE NEXT RALLY IS YOURS</p><h1>PIN-PON</h1>
-<button class="menu-action" id="menu-play">PLAY</button>
-<button class="menu-action" id="menu-customize">CUSTOMIZE</button>
-<button id="replay-intro">Replay Intro</button>
-<p>Play solo against the AI or challenge a friend. Customize the table, paddles and ball by selecting them.</p>
-<a href="./index.html" style="color:#61dafb">Home, Dev Log &amp; Tutorial</a>
+<div class="menu-court" aria-hidden="true"><i></i><b></b><em></em></div>
+<div class="menu-content"><p class="eyebrow">THE CLASSIC. REIMAGINED.</p><h1>PIN<span>-</span>PON</h1><p class="menu-tagline">One ball. Two sides. Your next victory.</p>
+<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
+<p class="creator-line">CREATED BY <strong>FRAMBER RODRIGUEZ</strong></p></div>
+<span class="menu-corner" aria-hidden="true">01 / READY TO RALLY</span>
 </section>
-<header><h1>🏓 Pin-Pon</h1><p><a href="./index.html">Home, Dev Log &amp; Tutorial</a></p><p>Move with ↑ / ↓ or W / S. On a phone, drag your paddle.</p></header>
+<section id="credits-screen" hidden aria-label="Movie-style credits">
+<button id="close-credits">← MAIN MENU</button><div class="credits-mask"><div id="credits-roll">
+<p class="eyebrow">A FRAMBER RODRIGUEZ GAME</p><h2>PIN-PON</h2><p class="credits-role">CREATOR</p><h3>Framber Rodriguez</h3>
+<p class="credits-role">THE GAME</p><p>A new rally for an arcade classic.</p><p>Single-player challenges.<br>Local two-player matches.<br>A court that feels like yours.</p>
+<p class="credits-role">GAMEPLAY &amp; EXPERIENCE</p><p>Ball physics &amp; paddle collisions<br>Adaptive AI difficulty<br>Score-based serves &amp; undo<br>Touch &amp; keyboard controls</p>
+<p class="credits-role">PERSONALIZATION</p><p>Your table. Your paddles. Your ball.<br>Select an object and make it yours.</p>
+<p class="credits-role">BUILT WITH</p><p>HTML · CSS · JavaScript</p>
+<p class="credits-role">SPECIAL THANKS</p><p>To everyone who plays,<br>tests and keeps the rally going.</p>
+<h3>Thank you for playing.</h3><p class="credits-end">PIN-PON · 2026</p>
+</div></div><p class="credits-caption">PRESS ESC TO RETURN</p>
+</section>
+<header id="game-header" hidden><span class="eyebrow">FRAMBER RODRIGUEZ</span><h1>PIN-PON</h1><p>↑ / ↓ or W / S to move · Space to serve · Drag to play on touchscreens</p></header>
     <audio id="backgroundMusic" loop></audio>
-    <div id="game-container">
+    <div id="game-container" hidden>
 <div id="game-toolbar"><button id="back-menu">Main Menu</button><button id="customize-button">Customize Colors</button></div>
 <div id="color-editor" hidden><p id="color-hint">Select the table, ball or either paddle.</p><label id="selected-color-label" for="selected-color" hidden>Selected object color</label><input id="selected-color" type="color" hidden><button id="finish-customize">Done</button></div>
         <div id="game">
@@ -118,7 +182,7 @@ body { background: #050a17; }
                  <input type="radio" name="gameMode" value="2p" id="mode2P"> <label for="mode2P">2 Players</label>
              </div>
              <hr style="margin: 8px 0; border-color: #555;">
-             <div id="options">
+             <details id="settings-panel"><summary>MATCH SETTINGS</summary><div id="options">
                  <div> <label for="difficultySelect">AI Difficulty:</label> <select id="difficultySelect"> <option value="easy">Easy</option> <option value="normal" selected>Normal</option> <option value="hard">Hard</option> <option value="veryHard">Very Hard</option> <option value="impossible">Impossible</option> </select> </div>
                  <div> <label for="winScoreInput">Win Score:</label> <input type="number" id="winScoreInput" value="10" min="1" max="1000" step="1"> </div>
                  <div> <label for="pointsPerScoreInput">Points/Score:</label> <input type="number" id="pointsPerScoreInput" value="1" min="1" max="1000" step="1"> </div>
@@ -127,17 +191,17 @@ body { background: #050a17; }
                  <div hidden> <label for="player2ColorPicker">P2/AI Color:</label> <input type="color" id="player2ColorPicker" value="#f0db4f"> </div>
                  <div hidden> <label for="ballColorPicker">Ball Color:</label> <input type="color" id="ballColorPicker" value="#ff5733"> </div>
                  <div hidden> <label for="backgroundColorPicker">BG Color:</label> <input type="color" id="backgroundColorPicker" value="#1e1e1e"> </div>
-                 <div>
+                 <div hidden>
                     <label for="musicSelect">Music:</label>
                     <select id="musicSelect">
                         </select>
                  </div>
              </div>
-             <hr style="margin: 8px 0; border-color: #555;">
-            <button id="startButton">Start Game</button>
+             </details><hr style="margin: 8px 0; border-color: #555;">
+            <button id="startButton">START MATCH</button>
             <button id="resetButton">Stop & Reset</button>
             <button id="undoButton" disabled>Undo Point</button>
-            <button id="toggleMusicButton">Play Music</button> <button id="fullscreenButton">Fullscreen</button> <div id="instructions"> </div>
+            <button id="toggleMusicButton" hidden>Play Music</button> <button id="fullscreenButton">Fullscreen</button> <div id="instructions"> </div>
         </div>
     </div>
     <script>
@@ -200,6 +264,9 @@ body { background: #050a17; }
             const introScreen = document.getElementById('intro-screen');
             const menuScreen = document.getElementById('main-menu');
             const introVideo = document.getElementById('intro-video');
+            const creditsScreen = document.getElementById('credits-screen');
+            const creditsRoll = document.getElementById('credits-roll');
+            const gameHeader = document.getElementById('game-header');
             const colorEditor = document.getElementById('color-editor');
             const selectedColor = document.getElementById('selected-color');
             const colorHint = document.getElementById('color-hint');
@@ -212,11 +279,13 @@ body { background: #050a17; }
             ];
             function showMenu() {
                 pauseGameLoop(); finishCustomize(); introVideo.pause();
-                introScreen.hidden = true; menuScreen.hidden = false;
+                introScreen.hidden = true; menuScreen.hidden = false; creditsScreen.hidden = true;
+                creditsRoll.classList.remove('rolling'); gameContainer.hidden = true; gameHeader.hidden = true;
                 document.getElementById('menu-play').focus();
             }
             function showGame() {
-                introScreen.hidden = true; menuScreen.hidden = true;
+                introScreen.hidden = true; menuScreen.hidden = true; creditsScreen.hidden = true;
+                gameContainer.hidden = false; gameHeader.hidden = false;
                 resetPaddles(); ball.reset(null);
                 document.getElementById('startButton').focus();
             }
@@ -262,11 +331,19 @@ body { background: #050a17; }
             document.getElementById('customize-button').addEventListener('click', beginCustomize);
             document.getElementById('finish-customize').addEventListener('click', finishCustomize);
             document.getElementById('back-menu').addEventListener('click', showMenu);
-            document.getElementById('replay-intro').addEventListener('click', () => {
-                menuScreen.hidden = true; introScreen.hidden = false;
-                introVideo.currentTime = 0; introVideo.play().catch(() => {});
+            document.getElementById('menu-credits').addEventListener('click', () => {
+                menuScreen.hidden = true; creditsScreen.hidden = false;
+                creditsRoll.classList.remove('rolling');
+                void creditsRoll.offsetWidth;
+                creditsRoll.classList.add('rolling');
+                document.getElementById('close-credits').focus();
             });
-            introVideo.addEventListener('ended', () => { document.getElementById('intro-start').focus(); });
+            document.getElementById('close-credits').addEventListener('click', showMenu);
+            creditsRoll.addEventListener('animationend', showMenu);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !creditsScreen.hidden) showMenu(); });
+            introVideo.addEventListener('ended', showMenu);
+            introVideo.addEventListener('error', showMenu);
+            introVideo.querySelector('source').addEventListener('error', showMenu);
             // --- Event Listeners ---
              setupEventListeners();
             window.addEventListener('blur', () => { keysPressed = {}; });
