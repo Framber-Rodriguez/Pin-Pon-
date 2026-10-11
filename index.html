@@ -162,6 +162,25 @@ button:hover { transform:translateY(-2px); }
 @media(prefers-reduced-motion:reduce) { .ball-trail { display:none; } .impact-ring { animation:none; display:none; } }
 #game-toolbar #stopButton { border-color:#65dbe75c; min-width:95px; }
 @media(max-width:500px) { #game-toolbar { gap:5px; } #game-toolbar button { padding:10px 8px; font-size:10px; } #game-toolbar #stopButton { min-width:70px; } }
+
+#score { background:#07111f !important; color:#fff !important; border:1px solid #9aeafa !important; text-shadow:none; box-shadow:0 3px 18px #0007; backdrop-filter:none; }
+#score span { color:#fff; }
+#powers-screen { position:fixed; inset:0; z-index:115; overflow:auto; padding:30px 16px; background:radial-gradient(ellipse at top,#163348,#050911 75%); display:flex; justify-content:center; align-items:flex-start; }
+.powers-panel { width:min(760px,100%); margin:auto; text-align:center; }
+.powers-panel h2 { font-size:clamp(32px,7vw,58px); letter-spacing:.05em; margin:14px 0; }
+.powers-panel>p { color:#9bb4c7; line-height:1.6; font-size:13px; }
+.power-actions { margin:20px 0; display:flex; justify-content:center; gap:12px; }
+#powers-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:20px 0; }
+.power-card { cursor:pointer; text-align:left; display:flex; gap:12px; align-items:flex-start; padding:18px; border:1px solid #355062; background:#0b1d2b; border-radius:12px; }
+.power-card:has(input:checked) { border-color:#68e3ef; background:#123a48; box-shadow:0 0 20px #4ecbe818; }
+.power-card input { margin-top:5px; accent-color:#68e3ef; }
+.power-card strong { display:block; font-size:15px; margin:8px 0; color:#effcff; }
+.power-card small { display:block; color:#9bb4c7; line-height:1.5; font-size:11px; }
+.power-card .power-symbol { font-size:24px; color:#84eff8; }
+#powers-done { max-width:260px; margin:24px auto; justify-content:center; }
+#power-status { font-size:11px; color:#a2dce8; letter-spacing:.06em; min-height:18px; text-align:center; }
+.power-pickup { position:absolute; width:34px; height:34px; border-radius:9px; background:#102035; color:#fff; border:2px solid #c08aff; box-shadow:0 0 20px #b763ff88; display:grid; place-items:center; font-weight:800; font-size:19px; pointer-events:none; z-index:6; }
+@media(max-width:600px) { #powers-grid { grid-template-columns:repeat(2,1fr); } .power-card { padding:12px; gap:5px; } }
 </style>
 </head>
 <body>
@@ -172,7 +191,7 @@ button:hover { transform:translateY(-2px); }
 <section id="main-menu" hidden aria-label="Main menu">
 <div class="menu-court" aria-hidden="true"><i></i><b></b><em></em></div>
 <div class="menu-content"><p class="eyebrow">THE CLASSIC. REIMAGINED.</p><h1>PIN<span>-</span>PON</h1><p class="menu-tagline">One ball. Two sides. Your next victory.</p>
-<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
+<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
 <p class="creator-line">CREATED BY <strong>FRAMBER RODRIGUEZ</strong></p></div>
 <span class="menu-corner" aria-hidden="true">01 / READY TO RALLY</span>
 </section>
@@ -187,6 +206,7 @@ button:hover { transform:translateY(-2px); }
 <h3>Thank you for playing.</h3><p class="credits-end">PIN-PON · 2026</p>
 </div></div><p class="credits-caption">PRESS ESC TO RETURN</p>
 </section>
+<section id="powers-screen" hidden aria-label="Power-ups menu"><div class="powers-panel"><p class="eyebrow">BUILD YOUR MATCH</p><h2>POWER-UPS</h2><p>Choose the items that can appear. Hit an item with the ball to claim it for the last player who touched the ball.</p><div class="power-actions"><button id="powers-all">ALL ON</button><button id="powers-none">ALL OFF</button></div><div id="powers-grid"></div><p id="powers-summary" role="status"></p><p class="power-note">Items appear at random times and positions during live rallies. There is no score trigger or fixed schedule. Pausing also pauses items and effects.</p><button id="powers-done" class="menu-action">DONE</button></div></section>
 <header id="game-header" hidden><span class="eyebrow">FRAMBER RODRIGUEZ</span><h1>PIN-PON</h1><p>↑ / ↓ or W / S to move · Space to serve · Drag to play on touchscreens</p></header>
     <audio id="backgroundMusic" loop></audio>
     <div id="game-container" hidden>
@@ -198,7 +218,7 @@ button:hover { transform:translateY(-2px); }
             <div id="player2" class="player"></div>
             <div id="ball"></div>
         </div>
-        <div id="controls" aria-label="Game Controls">
+        <p id="power-status" role="status" aria-live="polite">POWER-UPS · ON</p><div id="controls" aria-label="Game Controls">
              <div id="modeSelection">
                  <input type="radio" name="gameMode" value="1p" id="mode1P" checked> <label for="mode1P">1 Player</label>
                  <input type="radio" name="gameMode" value="2p" id="mode2P"> <label for="mode2P">2 Players</label>
@@ -221,7 +241,7 @@ button:hover { transform:translateY(-2px); }
              </div>
              </details><hr style="margin: 8px 0; border-color: #555;">
             <button id="startButton">START MATCH</button>
-            <button id="resetButton">RESET</button>
+            <button id="resetButton">RESET</button><button id="match-powers">POWER-UPS</button>
             <button id="undoButton" disabled>Undo Point</button>
             <button id="toggleMusicButton" hidden>Play Music</button> <button id="fullscreenButton">Fullscreen</button> <div id="instructions"> </div>
         </div>
@@ -278,7 +298,121 @@ button:hover { transform:translateY(-2px); }
                  alert("Error initializing game elements. Check console (F12).");
                  return;
               }
-             // Reuse a small trail pool; no per-frame DOM allocation.
+             const powerCatalog = [
+                { id:'giant', name:'Giant Paddle', symbol:'↕', description:'A taller paddle for 7 seconds.' },
+                { id:'quick', name:'Quick Paddle', symbol:'⚡', description:'Move faster for 7 seconds.' },
+                { id:'slow', name:'Slow Motion', symbol:'◷', description:'The ball slows down for 7 seconds.' },
+                { id:'bigball', name:'Mega Ball', symbol:'●', description:'A larger ball for 7 seconds.' },
+                { id:'shield', name:'Shield', symbol:'◇', description:'Block one missed ball within 8 seconds.' }
+            ];
+            const enabledPowers = new Set(powerCatalog.map(p => p.id));
+            let pickup = null;
+            let powerClock = 0;
+            let lastHitter = null;
+            let activeEffects = [];
+            let powerReturnToMenu = true;
+            const powerScreen = document.getElementById('powers-screen');
+            const powerGrid = document.getElementById('powers-grid');
+            const powerStatus = document.getElementById('power-status');
+            const powerSummary = document.getElementById('powers-summary');
+            powerCatalog.forEach(power => {
+                const label = document.createElement('label'); label.className = 'power-card';
+                label.innerHTML = `<input type="checkbox" checked value="${power.id}" aria-label="${power.name}"><span><span class="power-symbol" aria-hidden="true">${power.symbol}</span><strong>${power.name}</strong><small>${power.description}</small></span>`;
+                label.querySelector('input').addEventListener('change', e => {
+                    if (e.target.checked) enabledPowers.add(power.id); else enabledPowers.delete(power.id);
+                    if (!e.target.checked) activeEffects = activeEffects.filter(effect => effect.id !== power.id);
+                    if (pickup && !enabledPowers.has(pickup.id)) removePickup();
+                    applyPowerDimensions(); updatePowerSummary(); updatePowerStatus();
+                });
+                powerGrid.appendChild(label);
+            });
+            function updatePowerSummary() {
+                powerSummary.textContent = enabledPowers.size ? `${enabledPowers.size} of ${powerCatalog.length} power-ups enabled` : 'All power-ups OFF · Classic Pong';
+            }
+            function removePickup() { if (pickup) pickup.el.remove(); pickup = null; }
+            function resetPowerMatch() {
+                removePickup(); activeEffects = []; powerClock = 0; lastHitter = null;
+                applyPowerDimensions(); updatePowerStatus();
+            }
+            function applyPowerDimensions() {
+                if (!player1 || !player2 || !ball || game.clientHeight < 1) return;
+                for (const paddle of [player1,player2]) {
+                    const giant = activeEffects.some(e => e.id === 'giant' && e.side === paddle.side);
+                    paddle.height = Math.min(giant ? 155 : PADDLE_HEIGHT, game.clientHeight);
+                    paddle.speed = PLAYER_SPEED * (activeEffects.some(e => e.id === 'quick' && e.side === paddle.side) ? 1.6 : 1);
+                    paddle.el.style.height = paddle.height + 'px'; paddle.move(0);
+                    paddle.el.style.outline = activeEffects.some(e => e.id === 'shield' && e.side === paddle.side) ? '2px solid #c08aff' : '';
+                }
+                ball.size = activeEffects.some(e => e.id === 'bigball') ? 26 : BALL_SIZE;
+                ball.el.style.width = ball.el.style.height = ball.size + 'px';
+                ball.y = Math.max(0,Math.min(ball.y,game.clientHeight-ball.size));
+            }
+            function updatePowerStatus() {
+                const text = activeEffects.map(e => `${e.side === 'left' ? 'P1' : (gameMode === '1p' ? 'AI' : 'P2')} · ${powerCatalog.find(p => p.id === e.id).name}`);
+                powerStatus.textContent = text.length ? text.join('  |  ') : (enabledPowers.size ? 'POWER-UPS · RANDOM ITEMS ON' : 'CLASSIC MODE · POWER-UPS OFF');
+            }
+            function spawnPowerPickup() {
+                const pool = powerCatalog.filter(p => enabledPowers.has(p.id));
+                if (!pool.length) return;
+                const power = pool[Math.floor(Math.random() * pool.length)];
+                const x = game.clientWidth * (.2 + Math.random() * .6);
+                const y = 100 + Math.random() * Math.max(1,game.clientHeight - 160);
+                const el = document.createElement('div'); el.className = 'power-pickup';
+                el.textContent = power.symbol; el.setAttribute('aria-label',power.name);
+                el.style.left = x + 'px'; el.style.top = y + 'px'; game.appendChild(el);
+                pickup = { id:power.id, x,y,el,expires:powerClock+9000 };
+            }
+            function updatePowers(deltaTime) {
+                powerClock += deltaTime;
+                const before = activeEffects.length;
+                activeEffects = activeEffects.filter(e => e.until > powerClock);
+                if (before !== activeEffects.length) { applyPowerDimensions(); updatePowerStatus(); }
+                if (pickup && powerClock >= pickup.expires) removePickup();
+                if (!ball.owner && enabledPowers.size && !pickup && Math.random() < 1-Math.exp(-deltaTime/8500)) spawnPowerPickup();
+                if (!pickup || ball.owner) return;
+                if (ball.x + ball.size < pickup.x || ball.x > pickup.x + 34 || ball.y + ball.size < pickup.y || ball.y > pickup.y + 34) return;
+                const side = lastHitter ? lastHitter.side : (ball.velocity[0] > 0 ? 'left' : 'right');
+                const id = pickup.id;
+                activeEffects = activeEffects.filter(e => !(e.id === id && (id === 'slow' || id === 'bigball' || e.side === side)));
+                activeEffects.push({id,side,until:powerClock+(id === 'shield' ? 8000 : 7000)});
+                emitImpact(pickup.x+17,pickup.y+17,'#c08aff'); removePickup();
+                applyPowerDimensions(); updatePowerStatus();
+            }
+            function useShield() {
+                const side = ball.x <= 0 ? 'left' : (ball.x+ball.size >= game.clientWidth ? 'right' : null);
+                const effect = activeEffects.find(e => e.id === 'shield' && e.side === side);
+                if (!effect) return false;
+                activeEffects = activeEffects.filter(e => e !== effect);
+                ball.x = side === 'left' ? 1 : game.clientWidth-ball.size-1;
+                ball.velocity[0] = (side === 'left' ? 1 : -1) * Math.abs(ball.velocity[0]);
+                emitImpact(side === 'left' ? 0 : game.clientWidth,ball.y+ball.size/2,'#c08aff');
+                applyPowerDimensions(); updatePowerStatus(); return true;
+            }
+            function openPowerMenu(fromMenu) {
+                powerReturnToMenu = fromMenu; pauseGameLoop(); finishCustomize();
+                menuScreen.hidden = true; gameContainer.hidden = true; gameHeader.hidden = true;
+                powerScreen.hidden = false; updatePowerSummary();
+                document.getElementById('powers-done').focus();
+            }
+            function closePowerMenu() {
+                powerScreen.hidden = true;
+                if (powerReturnToMenu) showMenu();
+                else { gameContainer.hidden = false; gameHeader.hidden = false; applyPowerDimensions(); document.getElementById('startButton').focus(); }
+            }
+            document.getElementById('menu-powers').addEventListener('click', () => openPowerMenu(true));
+            document.getElementById('match-powers').addEventListener('click', () => openPowerMenu(false));
+            document.getElementById('powers-done').addEventListener('click', closePowerMenu);
+            function setAllPowers(on) {
+                enabledPowers.clear(); if (on) powerCatalog.forEach(p => enabledPowers.add(p.id));
+                powerGrid.querySelectorAll('input').forEach(input => { input.checked = on; });
+                if (!on) { removePickup(); activeEffects = []; applyPowerDimensions(); }
+                updatePowerSummary(); updatePowerStatus();
+            }
+            document.getElementById('powers-all').addEventListener('click', () => setAllPowers(true));
+            document.getElementById('powers-none').addEventListener('click', () => setAllPowers(false));
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !powerScreen.hidden) closePowerMenu(); });
+            updatePowerSummary();
+            // Reuse a small trail pool; no per-frame DOM allocation.
             const trailHistory = [];
             const trailNodes = Array.from({ length: 12 }, () => {
                 const el = document.createElement('div');
@@ -297,7 +431,7 @@ button:hover { transform:translateY(-2px); }
             function renderBallTrail(currentBall) {
                 syncArenaColors();
                 if (!gameRunning || currentBall.owner) { clearBallTrail(); return; }
-                trailHistory.unshift({ x: currentBall.x + BALL_SIZE / 2, y: currentBall.y + BALL_SIZE / 2 });
+                trailHistory.unshift({ x: currentBall.x + currentBall.size / 2, y: currentBall.y + currentBall.size / 2 });
                 trailHistory.length = Math.min(trailHistory.length, trailNodes.length + 1);
                 trailNodes.forEach((el, i) => {
                     const point = trailHistory[i + 1];
@@ -317,8 +451,8 @@ button:hover { transform:translateY(-2px); }
                 game.appendChild(ring); setTimeout(() => ring.remove(), 450);
             }
             // --- Classes (Player, Ball, AI - Unchanged structurally) ---
-              class Player { /* ... Player class code ... */ constructor(id, side) { this.el = document.getElementById(id); if (!this.el) { throw new Error(`Player element not found: ${id}`); } this.side = side; this.height = PADDLE_HEIGHT; this.width = PADDLE_WIDTH; this.speed = PLAYER_SPEED; this.y = (game.clientHeight - this.height) / 2; } update(deltaTime) { let dy = 0; if (!gameRunning) return; if (gameMode === '1p') { if (this.side === 'left') { if (keysPressed['arrowup'] || keysPressed['w']) { dy = -this.speed; } if (keysPressed['arrowdown'] || keysPressed['s']) { dy = this.speed; } } } else { if (this.side === 'left') { if (keysPressed['arrowup']) { dy = -this.speed; } if (keysPressed['arrowdown']) { dy = this.speed; } } else if (this.side === 'right') { if (keysPressed['w']) { dy = -this.speed; } if (keysPressed['s']) { dy = this.speed; } } } if (dy !== 0) { this.move(dy); } if (keysPressed[' '] && ball.owner === this) { this.fire(); } } move(dy) { const newY = this.y + dy; const maxY = game.clientHeight - this.height; this.y = Math.max(0, Math.min(newY, maxY)); this.el.style.top = `${this.y}px`; } fire() { if (ball.owner === this) { let angle = (Math.random() - 0.5) * Math.PI / 6; if (gameMode === '1p' && this.side === "right" && player1) { const playerCenterY = player1.y + player1.height / 2; const paddleCenterY = this.y + this.height / 2; const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2; const deltaY = targetY - (this.y + this.height / 2); const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8); angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8)); } const directionX = this.side === "left" ? 1 : -1; ball.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; ball.owner = null; } } getCenterY() { return this.y + this.height / 2; } }
-              class Ball { /* ... Ball class code ... */ constructor() { this.el = ballEl; if(!this.el) { throw new Error("Ball element not found"); } this.size = BALL_SIZE; this.reset(null); } reset(ownerInstance = null) { clearBallTrail(); this.owner = ownerInstance; currentBallSpeed = INITIAL_BALL_SPEED; if (this.owner) { this.followOwner(); this.velocity = [0, 0]; } else { this.x = (game.clientWidth - this.size) / 2; this.y = (game.clientHeight - this.size) / 2; const angle = (Math.random() * Math.PI / 2) - Math.PI / 4; const directionX = Math.random() < 0.5 ? 1 : -1; this.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; this.owner = null; } this.updateVisual(); } update(deltaTime) { if (!gameRunning && !this.owner) return; if (this.owner) { this.followOwner(); } else { this.x += this.velocity[0]; this.y += this.velocity[1]; if (this.y <= 0) { this.y = 0; emitImpact(this.x + this.size / 2, 0, ballColorPicker.value); this.velocity[1] *= -1; } else if (this.y >= game.clientHeight - this.size) { this.y = game.clientHeight - this.size; emitImpact(this.x + this.size / 2, game.clientHeight, ballColorPicker.value); this.velocity[1] *= -1; } } this.updateVisual(); } followOwner() { if (!this.owner) return; const ownerY = this.owner.y; const ownerCenterY = ownerY + this.owner.height / 2; this.y = ownerCenterY - this.size / 2; if (this.owner.side === "left") { this.x = this.owner.width + 10 + 5; } else { this.x = game.clientWidth - this.owner.width - 10 - this.size - 5; } } updateVisual() { if (this.el) { this.el.style.left = `${this.x}px`; this.el.style.top = `${this.y}px`; renderBallTrail(this); } } }
+              class Player { /* ... Player class code ... */ constructor(id, side) { this.el = document.getElementById(id); if (!this.el) { throw new Error(`Player element not found: ${id}`); } this.side = side; this.height = PADDLE_HEIGHT; this.width = PADDLE_WIDTH; this.speed = PLAYER_SPEED; this.y = (game.clientHeight - this.height) / 2; } update(deltaTime) { let dy = 0; if (!gameRunning) return; if (gameMode === '1p') { if (this.side === 'left') { if (keysPressed['arrowup'] || keysPressed['w']) { dy = -this.speed; } if (keysPressed['arrowdown'] || keysPressed['s']) { dy = this.speed; } } } else { if (this.side === 'left') { if (keysPressed['arrowup']) { dy = -this.speed; } if (keysPressed['arrowdown']) { dy = this.speed; } } else if (this.side === 'right') { if (keysPressed['w']) { dy = -this.speed; } if (keysPressed['s']) { dy = this.speed; } } } if (dy !== 0) { this.move(dy); } if (keysPressed[' '] && ball.owner === this) { this.fire(); } } move(dy) { const newY = this.y + dy; const maxY = game.clientHeight - this.height; this.y = Math.max(0, Math.min(newY, maxY)); this.el.style.top = `${this.y}px`; } fire() { if (ball.owner === this) { let angle = (Math.random() - 0.5) * Math.PI / 6; if (gameMode === '1p' && this.side === "right" && player1) { const playerCenterY = player1.y + player1.height / 2; const paddleCenterY = this.y + this.height / 2; const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2; const deltaY = targetY - (this.y + this.height / 2); const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8); angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8)); } const directionX = this.side === "left" ? 1 : -1; ball.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; ball.owner = null; lastHitter = this; } } getCenterY() { return this.y + this.height / 2; } }
+              class Ball { /* ... Ball class code ... */ constructor() { this.el = ballEl; if(!this.el) { throw new Error("Ball element not found"); } this.size = BALL_SIZE; this.reset(null); } reset(ownerInstance = null) { clearBallTrail(); lastHitter = null; this.owner = ownerInstance; currentBallSpeed = INITIAL_BALL_SPEED; if (this.owner) { this.followOwner(); this.velocity = [0, 0]; } else { this.x = (game.clientWidth - this.size) / 2; this.y = (game.clientHeight - this.size) / 2; const angle = (Math.random() * Math.PI / 2) - Math.PI / 4; const directionX = Math.random() < 0.5 ? 1 : -1; this.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; this.owner = null; } this.updateVisual(); } update(deltaTime) { if (!gameRunning && !this.owner) return; if (this.owner) { this.followOwner(); } else { const powerSpeed = activeEffects.some(e => e.id === "slow") ? .55 : 1; this.x += this.velocity[0] * powerSpeed; this.y += this.velocity[1] * powerSpeed; if (this.y <= 0) { this.y = 0; emitImpact(this.x + this.size / 2, 0, ballColorPicker.value); this.velocity[1] *= -1; } else if (this.y >= game.clientHeight - this.size) { this.y = game.clientHeight - this.size; emitImpact(this.x + this.size / 2, game.clientHeight, ballColorPicker.value); this.velocity[1] *= -1; } } this.updateVisual(); } followOwner() { if (!this.owner) return; const ownerY = this.owner.y; const ownerCenterY = ownerY + this.owner.height / 2; this.y = ownerCenterY - this.size / 2; if (this.owner.side === "left") { this.x = this.owner.width + 10 + 5; } else { this.x = game.clientWidth - this.owner.width - 10 - this.size - 5; } } updateVisual() { if (this.el) { this.el.style.left = `${this.x}px`; this.el.style.top = `${this.y}px`; renderBallTrail(this); } } }
               class AI { /* ... AI class code (speed change applied in setDifficulty) ... */ constructor(playerToControl) { this.ctl = playerToControl; this.difficultyFactor = 0.7; this.reactionTimer = 0; this.reactionDelay = 150; this.fireDelay = 500; this.fireTimer = 0; this.predictiveError = 0.1; this.maxSpeedMultiplier = 1.0; } setDifficulty(level) { /* console.log(`AI Difficulty set to: ${level}`); */ switch(level) { case 'easy': this.difficultyFactor = 0.4; this.reactionDelay = 300; this.fireDelay = 800; this.predictiveError = 0.3; this.maxSpeedMultiplier = 1.0; break; case 'normal': this.difficultyFactor = 0.7; this.reactionDelay = 180; this.fireDelay = 600; this.predictiveError = 0.15; this.maxSpeedMultiplier = 1.0; break; case 'hard': this.difficultyFactor = 1.0; this.reactionDelay = 100; this.fireDelay = 400; this.predictiveError = 0.08; this.maxSpeedMultiplier = 1.2; break; case 'veryHard': this.difficultyFactor = 1.3; this.reactionDelay = 50; this.fireDelay = 250; this.predictiveError = 0.04; this.maxSpeedMultiplier = 1.4; break; case 'impossible': this.difficultyFactor = 1.8; this.reactionDelay = 0; this.fireDelay = 150; this.predictiveError = 0.01; this.maxSpeedMultiplier = 1.5; break; } /* console.log(` -> Speed Multiplier: ${this.maxSpeedMultiplier}`); */ } update(deltaTime) { /* ... AI update logic ... */ if (!gameRunning) return; if (ball.owner === this.ctl) { this.fireTimer += deltaTime; if (this.fireTimer >= this.fireDelay) { this.ctl.fire(); this.fireTimer = 0; } return; } else { this.fireTimer = 0; } this.reactionTimer += deltaTime; if (this.reactionTimer >= this.reactionDelay && ball.velocity[0] > 0) { this.reactionTimer = 0; const distanceToPaddle = game.clientWidth - this.ctl.width - 10 - ball.x; const ballSpeedX = Math.max(Math.abs(ball.velocity[0]), 1); const timeToReach = distanceToPaddle / ballSpeedX; let predictedBallY = ball.y + ball.velocity[1] * timeToReach; const errorAmount = (Math.random() - 0.5) * 2 * this.predictiveError * game.clientHeight; predictedBallY += errorAmount; if (predictedBallY < 0 || predictedBallY > game.clientHeight - ball.size) { if (predictedBallY < 0) { predictedBallY = Math.abs(predictedBallY); } else { predictedBallY = (game.clientHeight - ball.size) - (predictedBallY - (game.clientHeight - ball.size)); } } const targetY = Math.max(ball.size / 2, Math.min(predictedBallY, game.clientHeight - ball.size / 2)); const paddleCenter = this.ctl.getCenterY(); const targetPaddleCenter = targetY; let dy = 0; const deadZone = this.ctl.height * 0.1 * (1 / this.difficultyFactor) ; if (paddleCenter < targetPaddleCenter - deadZone) { dy = this.ctl.speed * this.maxSpeedMultiplier; } else if (paddleCenter > targetPaddleCenter + deadZone) { dy = -this.ctl.speed * this.maxSpeedMultiplier; } if (dy !== 0) { this.ctl.move(dy); } } } }
             // --- Intro, menu and object-based customization ---
             let editingColors = false;
@@ -348,9 +482,10 @@ button:hover { transform:translateY(-2px); }
                 document.getElementById('menu-play').focus();
             }
             function showGame() {
+                resetPowerMatch();
                 canResumeMatch = false; stopButton.disabled = true; stopButton.textContent = "STOP";
                 introScreen.hidden = true; menuScreen.hidden = true; creditsScreen.hidden = true;
-                gameContainer.hidden = false; gameHeader.hidden = false;
+                gameContainer.hidden = false; gameHeader.hidden = false; applyPowerDimensions();
                 resetPaddles(); ball.reset(null);
                 document.getElementById('startButton').focus();
             }
@@ -450,6 +585,7 @@ button:hover { transform:translateY(-2px); }
                  document.addEventListener('fullscreenchange', updateFullscreenButton);
              }
              function initializeGame() {
+                 resetPowerMatch();
                  canResumeMatch = false; stopButton.disabled = true; stopButton.textContent = "STOP";
                  console.log("Initializing game...");
                  try {
@@ -608,7 +744,7 @@ button:hover { transform:translateY(-2px); }
                  console.log(`Starting game... Mode: ${gameMode}, Difficulty: ${gameMode === '1p' ? difficultySelect.value : 'N/A'}`);
                  try {
                      if (!player1 || !player2 || !ball) { throw new Error("Initialization failed, cannot start game."); }
-                     score = [0, 0]; keysPressed = {}; framesSinceStart = 0; lastScoreState = null; undoButton.disabled = true;
+                     resetPowerMatch(); score = [0, 0]; keysPressed = {}; framesSinceStart = 0; lastScoreState = null; undoButton.disabled = true;
                      updateScoreDisplay(); resetPaddles();
                      player1El.style.backgroundColor = player1ColorPicker.value; player2El.style.backgroundColor = player2ColorPicker.value; ballEl.style.backgroundColor = ballColorPicker.value; game.style.backgroundColor = backgroundColorPicker.value;
                      if (gameMode === '1p') { changeDifficulty({ target: difficultySelect }); }
@@ -651,16 +787,17 @@ button:hover { transform:translateY(-2px); }
              function resetPaddles() { /* ... same ... */ try { if (player1) { player1.y = (game.clientHeight - player1.height) / 2; player1.el.style.top = `${player1.y}px`; } if (player2) { player2.y = (game.clientHeight - player2.height) / 2; player2.el.style.top = `${player2.y}px`; } } catch(e) { console.error("Error resetting paddles", e); } }
              function changeDifficulty(event) { /* ... same ... */ const difficulty = event.target.value; if (ai && gameMode === '1p') { ai.setDifficulty(difficulty); updateInstructions(); } }
              function updateScoreDisplay() { /* ... same ... */ player1ScoreEl.textContent = score[0]; player2ScoreEl.textContent = score[1]; }
-             function checkCollisions() { /* ... same ... */ if (!gameRunning || ball.owner) return; if (ball.velocity[0] < 0 && ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 && ball.x >= player1.el.offsetLeft && ball.y + ball.size > player1.y && ball.y < player1.y + player1.height) { const intersectY = player1.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player1.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); ball.x = player1.el.offsetLeft + player1.width + 1; emitImpact(ball.x, ball.y + ball.size / 2, player1ColorPicker.value); } else if (ball.velocity[0] > 0 && ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 && ball.x <= player2.el.offsetLeft + player2.width && ball.y + ball.size > player2.y && ball.y < player2.y + player2.height) { const intersectY = player2.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player2.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); ball.x = player2.el.offsetLeft - ball.size - 1; emitImpact(ball.x + ball.size, ball.y + ball.size / 2, player2ColorPicker.value); } }
-             function checkScored() { /* ... same ... */ if (!gameRunning || ball.owner || framesSinceStart < 5) return; const gameWidth = game.clientWidth; let scorer = 0; if (ball.x <= 0) { scorer = 2; } else if (ball.x + ball.size >= gameWidth) { scorer = 1; } if (scorer !== 0) { lastScoreState = { score: [...score], scorer: scorer }; undoButton.disabled = false; if (scorer === 1) { score[0] += pointsPerScoreValue; } else { score[1] += pointsPerScoreValue; } updateScoreDisplay(); if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) { const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2'); const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`; console.log(`${winnerName} wins! ${finalScoreMsg}`); triggerWinAnimation(scorer === 1 ? 'left' : 'right'); pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`); } else { const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null; ball.reset(server); } } }
+             function checkCollisions() { /* ... same ... */ if (!gameRunning || ball.owner) return; if (ball.velocity[0] < 0 && ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 && ball.x >= player1.el.offsetLeft && ball.y + ball.size > player1.y && ball.y < player1.y + player1.height) { const intersectY = player1.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player1.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); lastHitter = player1; ball.x = player1.el.offsetLeft + player1.width + 1; emitImpact(ball.x, ball.y + ball.size / 2, player1ColorPicker.value); } else if (ball.velocity[0] > 0 && ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 && ball.x <= player2.el.offsetLeft + player2.width && ball.y + ball.size > player2.y && ball.y < player2.y + player2.height) { const intersectY = player2.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player2.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); lastHitter = player2; ball.x = player2.el.offsetLeft - ball.size - 1; emitImpact(ball.x + ball.size, ball.y + ball.size / 2, player2ColorPicker.value); } }
+             function checkScored() { /* ... same ... */ if (!gameRunning || ball.owner || framesSinceStart < 5) return; if (useShield()) return; const gameWidth = game.clientWidth; let scorer = 0; if (ball.x <= 0) { scorer = 2; } else if (ball.x + ball.size >= gameWidth) { scorer = 1; } if (scorer !== 0) { lastScoreState = { score: [...score], scorer: scorer }; undoButton.disabled = false; if (scorer === 1) { score[0] += pointsPerScoreValue; } else { score[1] += pointsPerScoreValue; } updateScoreDisplay(); if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) { const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2'); const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`; console.log(`${winnerName} wins! ${finalScoreMsg}`); triggerWinAnimation(scorer === 1 ? 'left' : 'right'); pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`); } else { const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null; ball.reset(server); } } }
              function triggerWinAnimation(winnerSide) { /* ... same ... */ const colors = ['var(--win-color1)', 'var(--win-color2)', 'var(--win-color3)', 'var(--win-color4)']; const emitterX = game.clientWidth / 2; const emitterY = game.clientHeight / 2; for (let i = 0; i < WIN_PARTICLE_COUNT; i++) { const particle = document.createElement('div'); particle.classList.add('win-particle'); game.appendChild(particle); const angle = Math.random() * Math.PI * 2; const speed = 0.8 + Math.random() * 0.7; const duration = 1.5 + Math.random() * 1.0; particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; particle.style.left = `${emitterX}px`; particle.style.top = `${emitterY}px`; particle.style.setProperty('--vx', Math.cos(angle) * speed); particle.style.setProperty('--vy', Math.sin(angle) * speed); particle.style.animation = `win-explode ${duration}s ease-out forwards`; setTimeout(() => { particle.remove(); }, duration * 1000); } }
              // --- Game Loop --- (Unchanged)
-             function update(time) { if (!gameRunning) { animationFrameId = null; return; } const deltaTime = time - lastUpdate; const cappedDeltaTime = Math.min(deltaTime, 50); lastUpdate = time; framesSinceStart++; try { player1.update(cappedDeltaTime); if (gameMode === '1p') { ai.update(cappedDeltaTime); } else { player2.update(cappedDeltaTime); } ball.update(cappedDeltaTime); checkCollisions(); checkScored(); if (gameRunning) { animationFrameId = requestAnimationFrame(update); } else { console.log("Game loop ending because gameRunning became false."); animationFrameId = null; } } catch (error) { console.error("Error during game update:", error); alert(`A critical error occurred during the game loop: ${error.message}. Check the console (F12). Game stopped.`); pauseGameLoop(); } }
+             function update(time) { if (!gameRunning) { animationFrameId = null; return; } const deltaTime = time - lastUpdate; const cappedDeltaTime = Math.min(deltaTime, 50); lastUpdate = time; framesSinceStart++; try { player1.update(cappedDeltaTime); if (gameMode === '1p') { ai.update(cappedDeltaTime); } else { player2.update(cappedDeltaTime); } ball.update(cappedDeltaTime); checkCollisions(); updatePowers(cappedDeltaTime); checkScored(); if (gameRunning) { animationFrameId = requestAnimationFrame(update); } else { console.log("Game loop ending because gameRunning became false."); animationFrameId = null; } } catch (error) { console.error("Error during game update:", error); alert(`A critical error occurred during the game loop: ${error.message}. Check the console (F12). Game stopped.`); pauseGameLoop(); } }
             // --- Start Initialization ---
              initializeGame();
         }); // End DOMContentLoaded
     </script>
 </body>
 </html>
+
 
 
