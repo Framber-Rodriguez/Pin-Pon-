@@ -69,12 +69,43 @@
     #game { touch-action: none; }
         header { text-align: center; margin-bottom: 16px; }
         header a { color: #61dafb; }
-    </style>
+    
+[hidden] { display: none !important; }
+body { background: #050a17; }
+#intro-screen, #main-menu { position: fixed; inset: 0; z-index: 100; background: #050a17; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; gap: 18px; }
+#intro-screen video { width: min(960px,100%); max-height: 70vh; object-fit: contain; border-radius: 20px; }
+#main-menu h1 { font-size: clamp(42px,10vw,88px); color: #61dafb; letter-spacing: .08em; }
+.menu-action { padding: 15px 32px; border-radius: 12px; background: #61dafb; color: #050a17; font-weight: bold; font-size: 18px; min-width: 220px; }
+#main-menu p { color: #b8c4d9; max-width: 480px; line-height: 1.6; }
+#game-container { margin: auto; }
+#game::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 2px dashed #ffffff35; pointer-events: none; }
+#game.editing, #game.editing .player, #game.editing #ball { cursor: pointer; }
+#game.editing .player, #game.editing #ball { outline: 2px solid #ffffff65; outline-offset: 4px; }
+.selected-object { outline: 3px solid #61dafb !important; outline-offset: 4px; }
+#color-editor { padding: 14px; width: 100%; border: 1px solid #61dafb; border-radius: 12px; margin-bottom: 12px; }
+#color-editor p { margin: 8px; }
+#game-toolbar { margin-bottom: 12px; }
+@media(max-width: 500px) { #game { height: 360px; } }
+</style>
 </head>
 <body>
+<section id="intro-screen" aria-label="Pong introduction">
+<video id="intro-video" autoplay muted playsinline preload="auto" aria-label="Animated Pong rally"><source src="assets/pong-intro.mp4" type="video/mp4"></video>
+<h1>PIN-PON</h1><button class="menu-action" id="intro-start">START</button>
+</section>
+<section id="main-menu" hidden aria-label="Main menu">
+<p>THE NEXT RALLY IS YOURS</p><h1>PIN-PON</h1>
+<button class="menu-action" id="menu-play">PLAY</button>
+<button class="menu-action" id="menu-customize">CUSTOMIZE</button>
+<button id="replay-intro">Replay Intro</button>
+<p>Play solo against the AI or challenge a friend. Customize the table, paddles and ball by selecting them.</p>
+<a href="./index.html" style="color:#61dafb">Home, Dev Log &amp; Tutorial</a>
+</section>
 <header><h1>🏓 Pin-Pon</h1><p><a href="./index.html">Home, Dev Log &amp; Tutorial</a></p><p>Move with ↑ / ↓ or W / S. On a phone, drag your paddle.</p></header>
     <audio id="backgroundMusic" loop></audio>
     <div id="game-container">
+<div id="game-toolbar"><button id="back-menu">Main Menu</button><button id="customize-button">Customize Colors</button></div>
+<div id="color-editor" hidden><p id="color-hint">Select the table, ball or either paddle.</p><label id="selected-color-label" for="selected-color" hidden>Selected object color</label><input id="selected-color" type="color" hidden><button id="finish-customize">Done</button></div>
         <div id="game">
             <div id="score" role="status" aria-live="polite"><span id="player1Score">0</span> - <span id="player2Score">0</span></div>
             <div id="player1" class="player"></div>
@@ -92,10 +123,10 @@
                  <div> <label for="winScoreInput">Win Score:</label> <input type="number" id="winScoreInput" value="10" min="1" max="1000" step="1"> </div>
                  <div> <label for="pointsPerScoreInput">Points/Score:</label> <input type="number" id="pointsPerScoreInput" value="1" min="1" max="1000" step="1"> </div>
                  <div> <label> <input type="checkbox" id="possessionToggle" checked> Serve on Score </label> </div>
-                 <div> <label for="player1ColorPicker">P1 Color:</label> <input type="color" id="player1ColorPicker" value="#61dafb"> </div>
-                 <div> <label for="player2ColorPicker">P2/AI Color:</label> <input type="color" id="player2ColorPicker" value="#f0db4f"> </div>
-                 <div> <label for="ballColorPicker">Ball Color:</label> <input type="color" id="ballColorPicker" value="#ff5733"> </div>
-                 <div> <label for="backgroundColorPicker">BG Color:</label> <input type="color" id="backgroundColorPicker" value="#1e1e1e"> </div>
+                 <div hidden> <label for="player1ColorPicker">P1 Color:</label> <input type="color" id="player1ColorPicker" value="#61dafb"> </div>
+                 <div hidden> <label for="player2ColorPicker">P2/AI Color:</label> <input type="color" id="player2ColorPicker" value="#f0db4f"> </div>
+                 <div hidden> <label for="ballColorPicker">Ball Color:</label> <input type="color" id="ballColorPicker" value="#ff5733"> </div>
+                 <div hidden> <label for="backgroundColorPicker">BG Color:</label> <input type="color" id="backgroundColorPicker" value="#1e1e1e"> </div>
                  <div>
                     <label for="musicSelect">Music:</label>
                     <select id="musicSelect">
@@ -163,13 +194,86 @@
               class Player { /* ... Player class code ... */ constructor(id, side) { this.el = document.getElementById(id); if (!this.el) { throw new Error(`Player element not found: ${id}`); } this.side = side; this.height = PADDLE_HEIGHT; this.width = PADDLE_WIDTH; this.speed = PLAYER_SPEED; this.y = (game.clientHeight - this.height) / 2; } update(deltaTime) { let dy = 0; if (!gameRunning) return; if (gameMode === '1p') { if (this.side === 'left') { if (keysPressed['arrowup'] || keysPressed['w']) { dy = -this.speed; } if (keysPressed['arrowdown'] || keysPressed['s']) { dy = this.speed; } } } else { if (this.side === 'left') { if (keysPressed['arrowup']) { dy = -this.speed; } if (keysPressed['arrowdown']) { dy = this.speed; } } else if (this.side === 'right') { if (keysPressed['w']) { dy = -this.speed; } if (keysPressed['s']) { dy = this.speed; } } } if (dy !== 0) { this.move(dy); } if (keysPressed[' '] && ball.owner === this) { this.fire(); } } move(dy) { const newY = this.y + dy; const maxY = game.clientHeight - this.height; this.y = Math.max(0, Math.min(newY, maxY)); this.el.style.top = `${this.y}px`; } fire() { if (ball.owner === this) { let angle = (Math.random() - 0.5) * Math.PI / 6; if (gameMode === '1p' && this.side === "right" && player1) { const playerCenterY = player1.y + player1.height / 2; const paddleCenterY = this.y + this.height / 2; const targetY = game.clientHeight / 2 + (playerCenterY - paddleCenterY) * 0.2; const deltaY = targetY - (this.y + this.height / 2); const targetAngle = Math.atan2(deltaY, game.clientWidth * 0.8); angle = Math.max(-MAX_BOUNCE_ANGLE * 0.8, Math.min(targetAngle, MAX_BOUNCE_ANGLE * 0.8)); } const directionX = this.side === "left" ? 1 : -1; ball.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; ball.owner = null; } } getCenterY() { return this.y + this.height / 2; } }
               class Ball { /* ... Ball class code ... */ constructor() { this.el = ballEl; if(!this.el) { throw new Error("Ball element not found"); } this.size = BALL_SIZE; this.reset(null); } reset(ownerInstance = null) { this.owner = ownerInstance; currentBallSpeed = INITIAL_BALL_SPEED; if (this.owner) { this.followOwner(); this.velocity = [0, 0]; } else { this.x = (game.clientWidth - this.size) / 2; this.y = (game.clientHeight - this.size) / 2; const angle = (Math.random() * Math.PI / 2) - Math.PI / 4; const directionX = Math.random() < 0.5 ? 1 : -1; this.velocity = [ directionX * currentBallSpeed * Math.cos(angle), currentBallSpeed * Math.sin(angle) ]; this.owner = null; } this.updateVisual(); } update(deltaTime) { if (!gameRunning && !this.owner) return; if (this.owner) { this.followOwner(); } else { this.x += this.velocity[0]; this.y += this.velocity[1]; if (this.y <= 0) { this.y = 0; this.velocity[1] *= -1; } else if (this.y >= game.clientHeight - this.size) { this.y = game.clientHeight - this.size; this.velocity[1] *= -1; } } this.updateVisual(); } followOwner() { if (!this.owner) return; const ownerY = this.owner.y; const ownerCenterY = ownerY + this.owner.height / 2; this.y = ownerCenterY - this.size / 2; if (this.owner.side === "left") { this.x = this.owner.width + 10 + 5; } else { this.x = game.clientWidth - this.owner.width - 10 - this.size - 5; } } updateVisual() { if (this.el) { this.el.style.left = `${this.x}px`; this.el.style.top = `${this.y}px`; } } }
               class AI { /* ... AI class code (speed change applied in setDifficulty) ... */ constructor(playerToControl) { this.ctl = playerToControl; this.difficultyFactor = 0.7; this.reactionTimer = 0; this.reactionDelay = 150; this.fireDelay = 500; this.fireTimer = 0; this.predictiveError = 0.1; this.maxSpeedMultiplier = 1.0; } setDifficulty(level) { /* console.log(`AI Difficulty set to: ${level}`); */ switch(level) { case 'easy': this.difficultyFactor = 0.4; this.reactionDelay = 300; this.fireDelay = 800; this.predictiveError = 0.3; this.maxSpeedMultiplier = 1.0; break; case 'normal': this.difficultyFactor = 0.7; this.reactionDelay = 180; this.fireDelay = 600; this.predictiveError = 0.15; this.maxSpeedMultiplier = 1.0; break; case 'hard': this.difficultyFactor = 1.0; this.reactionDelay = 100; this.fireDelay = 400; this.predictiveError = 0.08; this.maxSpeedMultiplier = 1.2; break; case 'veryHard': this.difficultyFactor = 1.3; this.reactionDelay = 50; this.fireDelay = 250; this.predictiveError = 0.04; this.maxSpeedMultiplier = 1.4; break; case 'impossible': this.difficultyFactor = 1.8; this.reactionDelay = 0; this.fireDelay = 150; this.predictiveError = 0.01; this.maxSpeedMultiplier = 1.5; break; } /* console.log(` -> Speed Multiplier: ${this.maxSpeedMultiplier}`); */ } update(deltaTime) { /* ... AI update logic ... */ if (!gameRunning) return; if (ball.owner === this.ctl) { this.fireTimer += deltaTime; if (this.fireTimer >= this.fireDelay) { this.ctl.fire(); this.fireTimer = 0; } return; } else { this.fireTimer = 0; } this.reactionTimer += deltaTime; if (this.reactionTimer >= this.reactionDelay && ball.velocity[0] > 0) { this.reactionTimer = 0; const distanceToPaddle = game.clientWidth - this.ctl.width - 10 - ball.x; const ballSpeedX = Math.max(Math.abs(ball.velocity[0]), 1); const timeToReach = distanceToPaddle / ballSpeedX; let predictedBallY = ball.y + ball.velocity[1] * timeToReach; const errorAmount = (Math.random() - 0.5) * 2 * this.predictiveError * game.clientHeight; predictedBallY += errorAmount; if (predictedBallY < 0 || predictedBallY > game.clientHeight - ball.size) { if (predictedBallY < 0) { predictedBallY = Math.abs(predictedBallY); } else { predictedBallY = (game.clientHeight - ball.size) - (predictedBallY - (game.clientHeight - ball.size)); } } const targetY = Math.max(ball.size / 2, Math.min(predictedBallY, game.clientHeight - ball.size / 2)); const paddleCenter = this.ctl.getCenterY(); const targetPaddleCenter = targetY; let dy = 0; const deadZone = this.ctl.height * 0.1 * (1 / this.difficultyFactor) ; if (paddleCenter < targetPaddleCenter - deadZone) { dy = this.ctl.speed * this.maxSpeedMultiplier; } else if (paddleCenter > targetPaddleCenter + deadZone) { dy = -this.ctl.speed * this.maxSpeedMultiplier; } if (dy !== 0) { this.ctl.move(dy); } } } }
+            // --- Intro, menu and object-based customization ---
+            let editingColors = false;
+            let selectedColorTarget = null;
+            const introScreen = document.getElementById('intro-screen');
+            const menuScreen = document.getElementById('main-menu');
+            const introVideo = document.getElementById('intro-video');
+            const colorEditor = document.getElementById('color-editor');
+            const selectedColor = document.getElementById('selected-color');
+            const colorHint = document.getElementById('color-hint');
+            const colorLabel = document.getElementById('selected-color-label');
+            const targets = [
+                { el: player1El, picker: player1ColorPicker, name: 'Player 1 paddle' },
+                { el: player2El, picker: player2ColorPicker, name: 'Player 2 / AI paddle' },
+                { el: ballEl, picker: ballColorPicker, name: 'Ball' },
+                { el: game, picker: backgroundColorPicker, name: 'Table' }
+            ];
+            function showMenu() {
+                pauseGameLoop(); finishCustomize(); introVideo.pause();
+                introScreen.hidden = true; menuScreen.hidden = false;
+                document.getElementById('menu-play').focus();
+            }
+            function showGame() {
+                introScreen.hidden = true; menuScreen.hidden = true;
+                resetPaddles(); ball.reset(null);
+                document.getElementById('startButton').focus();
+            }
+            function beginCustomize() {
+                pauseGameLoop(); editingColors = true;
+                game.classList.add('editing'); colorEditor.hidden = false;
+                colorHint.textContent = 'Select the table, ball or either paddle.';
+                selectedColor.hidden = true; colorLabel.hidden = true;
+            }
+            function finishCustomize() {
+                editingColors = false; colorEditor.hidden = true;
+                game.classList.remove('editing');
+                targets.forEach(t => t.el.classList.remove('selected-object'));
+                selectedColorTarget = null;
+            }
+            function selectColorTarget(el) {
+                if (!editingColors) return;
+                selectedColorTarget = targets.find(t => t.el === el) || targets[3];
+                targets.forEach(t => t.el.classList.remove('selected-object'));
+                selectedColorTarget.el.classList.add('selected-object');
+                selectedColor.value = selectedColorTarget.picker.value;
+                selectedColor.hidden = false; colorLabel.hidden = false;
+                colorLabel.textContent = selectedColorTarget.name + ' color';
+                colorHint.textContent = 'Selected: ' + selectedColorTarget.name;
+            }
+            selectedColor.addEventListener('input', () => {
+                if (!selectedColorTarget) return;
+                selectedColorTarget.picker.value = selectedColor.value;
+                selectedColorTarget.el.style.backgroundColor = selectedColor.value;
+            });
+            targets.forEach(t => {
+                t.el.tabIndex = 0;
+                t.el.setAttribute('aria-label', t.name);
+                t.el.addEventListener('keydown', e => {
+                    if (editingColors && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault(); e.stopPropagation(); selectColorTarget(t.el);
+                    }
+                });
+            });
+            document.getElementById('intro-start').addEventListener('click', showMenu);
+            document.getElementById('menu-play').addEventListener('click', showGame);
+            document.getElementById('menu-customize').addEventListener('click', () => { showGame(); beginCustomize(); });
+            document.getElementById('customize-button').addEventListener('click', beginCustomize);
+            document.getElementById('finish-customize').addEventListener('click', finishCustomize);
+            document.getElementById('back-menu').addEventListener('click', showMenu);
+            document.getElementById('replay-intro').addEventListener('click', () => {
+                menuScreen.hidden = true; introScreen.hidden = false;
+                introVideo.currentTime = 0; introVideo.play().catch(() => {});
+            });
+            introVideo.addEventListener('ended', () => { document.getElementById('intro-start').focus(); });
             // --- Event Listeners ---
              setupEventListeners();
             window.addEventListener('blur', () => { keysPressed = {}; });
-            game.addEventListener('pointerdown', e => { game.setPointerCapture(e.pointerId); movePointer(e); });
+            game.addEventListener('pointerdown', e => { if (editingColors) { selectColorTarget(e.target); return; } if (gameRunning) { game.setPointerCapture(e.pointerId); movePointer(e); } });
             game.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') movePointer(e); });
             function movePointer(e) {
-                if (!gameRunning) return;
+                if (!gameRunning || editingColors) return;
                 const rect = game.getBoundingClientRect();
                 const paddle = gameMode === '2p' && e.clientX - rect.left > rect.width / 2 ? player2 : player1;
                 paddle.move(e.clientY - rect.top - game.clientTop - paddle.height / 2 - paddle.y);
@@ -341,7 +445,8 @@
              function handlePointsChange(e) { /* ... same ... */ let newValue = parseInt(e.target.value, 10); if (isNaN(newValue) || newValue < 1) { newValue = 1; } const maxVal = parseInt(pointsPerScoreInput.max, 10) || 1000; pointsPerScoreValue = Math.min(newValue, maxVal); e.target.value = pointsPerScoreValue; console.log("Points per score set to:", pointsPerScoreValue); updateInstructions(); }
              function handleModeChange() { /* ... same ... */ const selectedMode = document.querySelector('input[name="gameMode"]:checked').value; gameMode = selectedMode; const is1P = (gameMode === '1p'); difficultySelect.disabled = !is1P; difficultySelect.style.opacity = is1P ? '1' : '0.5'; difficultySelect.style.cursor = is1P ? 'pointer' : 'not-allowed'; if (is1P && ai) { changeDifficulty({ target: difficultySelect }); } resetPaddles(); if (ball) ball.reset(null); updateInstructions(); }
              function updateInstructions() { /* ... same ... */ let text = `Win: ${winScoreLimit} | Pts: ${pointsPerScoreValue} | `; if (gameMode === '1p') { const difficultyText = difficultySelect.options[difficultySelect.selectedIndex].text; text += `P1 [↑][↓] | Fire [Space] | AI: ${difficultyText}`; } else { text += `P1 [↑][↓] | P2 [W][S] | Fire [Space]`; } instructionsEl.innerHTML = text.replace(/\|/g, '<span style="opacity:0.5; margin: 0 4px;">|</span>'); }
-             function startGame() { // Modified to play music on start
+             function startGame() {
+                 if (editingColors) finishCustomize(); // Modified to play music on start
                  if (gameRunning) { return; }
                  console.log(`Starting game... Mode: ${gameMode}, Difficulty: ${gameMode === '1p' ? difficultySelect.value : 'N/A'}`);
                  try {
