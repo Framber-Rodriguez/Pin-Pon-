@@ -18,20 +18,20 @@ A neon arcade game with solo AI challenges, local two-player matches, a cinemati
 
 English, Spanish, French, Portuguese, German, Italian, Arabic, Hindi, Chinese and Japanese. Select a language at the top right; the game remembers it. PIN-PON, creator names and provider brands stay unchanged. The cinematic video is a rendered asset and does not change language.
 
-## Global leaderboard — setup required
+## Global leaderboard
 
-The interface and Supabase integration are included. Until configured, the interface clearly shows setup pending and does not pretend to save scores.
+Connected to the dedicated **pin-pon** Supabase project. The database, public key and redirect URLs are configured. Email authentication currently uses Supabase default delivery, restricted to project members. Public email delivery and social providers still require setup.
 
-1. Create or connect a dedicated Supabase project.
+For another deployment: create or connect a dedicated Supabase project.
 2. Run `supabase/schema.sql` in its SQL editor.
 3. Put the project URL and **publishable** key (or legacy anon key) in `config.js`. Never publish a service-role key or OAuth secret.
 4. Set Auth Site URL to `https://framber-rodriguez.github.io/Pin-Pon-/`. Add both the root URL and `https://framber-rodriguez.github.io/Pin-Pon-/pong.html` to allowed redirect URLs.
-5. Enable email magic links. Configure production email delivery if needed.
+5. Configure custom SMTP for login emails to public players; then set `emailPublicReady: true` in `config.js`. Email magic links are enabled.
 6. Enable Google, Discord or Facebook in Supabase with the provider's application credentials and the callback URL shown there. Only then add their lowercase names to `config.js` providers.
 
 Sign in before starting a match to save its result. Categories: Easy, Normal, Hard, Very Hard, Impossible; separate Classic and Items boards. Ranked matches are solo vs AI, first to 10, 1 point per goal, no undo. Changing rules or powers during a match makes it practice. Losses are saved, but standings show players with wins. Rank sorts by wins, then cumulative winning score margin (the Points column), then earliest result. The top 50 are displayed.
 
-Private emails never appear in public standings. Direct table access is revoked; authenticated result submission uses a constrained RPC. Public reads return display names and totals only. Duplicate match IDs are ignored and submissions are rate-limited.
+Private emails never appear in public standings. Raw results live in the unexposed `pong_private` schema. Direct table access is revoked; authenticated result submission uses a constrained RPC. Public reads return display names and totals only. Duplicate match IDs are ignored and submissions are rate-limited.
 
 **Integrity limit:** gameplay runs in the browser. These are community results, not server-verified competition scores. Authentication, database validation and rate limits do not prove that a client actually played the match. Competitive anti-cheat would require server-authoritative gameplay or replay validation.
 

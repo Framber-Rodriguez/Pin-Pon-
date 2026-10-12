@@ -1,6 +1,7 @@
 // Public Supabase project settings. Never put a service_role key here.
 window.PONG_CONFIG = {
-  supabaseUrl: '',
-  supabasePublishableKey: '',
-  providers: [] // Enable only after configuring them in Supabase: google, discord, facebook.
+  "supabaseUrl": "https://ltulzebhhfoyownduxii.supabase.co",
+  "supabasePublishableKey": "sb_publishable_JZ_p1ikuVI5biTuywf8FoA_wjQRnGvh",
+  "providers": [],
+  "emailPublicReady": false
 };

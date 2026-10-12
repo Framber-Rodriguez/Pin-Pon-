@@ -40,7 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
  function message(id,text){$(id).textContent=text;}
  function authUI(){
   $('auth-form').hidden=!!user;$('oauth-buttons').hidden=!!user;$('profile-controls').hidden=!user;
-  if(user) $('public-name').value=user.user_metadata?.pong_name || '';
+  if(user) { $('public-name').value=user.user_metadata?.pong_name || ''; message('auth-message',''); }
+  else if(client && !cfg.emailPublicReady) message('auth-message','Email login is limited to project members until public email delivery is configured.');
  }
  async function board(){
   const gen=++fetchGeneration;$('board-rows').replaceChildren();
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
  $('auth-form').addEventListener('submit',async e=>{
   e.preventDefault();if(!client)return;const button=$('email-login');button.disabled=true;
   try{const {error}=await client.auth.signInWithOtp({email:$('login-email').value.trim(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;message('auth-message','Check your email for the login link.');}
-  catch(_){message('auth-message','Could not connect. Try again.');}finally{button.disabled=false;}
+  catch(error){message('auth-message',error.code === 'over_email_send_rate_limit' ? 'Too many login attempts. Please wait and try again.' : (error.code === 'email_address_not_authorized' ? 'Email login is limited to project members until public email delivery is configured.' : 'Could not connect. Try again.'));}finally{button.disabled=false;}
  });
  $('save-name').addEventListener('click',async()=>{
   if(!client||!user)return;const name=$('public-name').value.trim();if(name.length<2){$('public-name').focus();return;}
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const b=document.createElement('button');b.textContent=provider[0].toUpperCase()+provider.slice(1);b.dataset.noTranslate='';
     b.addEventListener('click',async()=>{const {error}=await client.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+location.pathname}});if(error)message('auth-message','Could not connect. Try again.');});$('oauth-buttons').appendChild(b);
    }
+   if(!user && !cfg.emailPublicReady) message('auth-message','Email login is limited to project members until public email delivery is configured.');
    if(!panel.hidden)board();
   }catch(_){client=null;message('auth-message','Could not connect. Try again.');$('email-login').disabled=true;}
  }
