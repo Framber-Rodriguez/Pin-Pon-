@@ -652,7 +652,13 @@ button:hover { transform:translateY(-2px); }
                      const key=e.key.toLowerCase();
                      if(!gameRunning || editingColors || !['arrowup','arrowdown','w','s',' '].includes(key)) return;
                      if(e.target.closest('input,select,textarea,[contenteditable="true"]')) return;
-                     e.preventDefault();e.stopPropagation();cancelPointerControl();keysPressed[key]=true;
+                     e.preventDefault();e.stopPropagation();cancelPointerControl();
+                     if(!keysPressed[key]) {
+                         const paddle=key==='arrowup'||key==='arrowdown'?player1:(key==='w'||key==='s'?(gameMode==='2p'?player2:player1):null);
+                         if(paddle) paddle.move((key==='arrowup'||key==='w'?-1:1)*paddle.speed);
+                         if(key===' ' && ball.owner) ball.owner.fire();
+                     }
+                     keysPressed[key]=true;
                  },true);
                  document.addEventListener('keyup', e => {keysPressed[e.key.toLowerCase()]=false;});
                  startButton.addEventListener("click", startGame);
