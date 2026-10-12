@@ -189,6 +189,9 @@ button:hover { transform:translateY(-2px); }
 </head>
 <body>
 <div id="language-bar"><label for="language-select">Language</label><select id="language-select" aria-label="Language"><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="pt">Português</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="ar">العربية</option><option value="hi">हिन्दी</option><option value="zh">中文</option><option value="ja">日本語</option></select></div>
+<button id="menu-leaderboard" aria-label="GLOBAL LEADERBOARD" aria-haspopup="dialog" aria-controls="online-screen">
+<svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true" focusable="false"><rect x="3" y="3" width="34" height="34" fill="#232830" stroke="#b7bac2" stroke-width="2"/><path d="M11 27V18h4v9zm6 0V14h4v13zm6 0V10h4v17z" fill="#fff"/><path d="M10 30h18" stroke="#c5c9d1" stroke-width="1.5"/></svg>
+<span class="leaderboard-hint">GLOBAL LEADERBOARD</span></button>
 <section id="intro-screen" aria-label="Pong introduction">
 <video id="intro-video" autoplay muted playsinline preload="auto" aria-label="Ten-second cinematic Pong introduction"><source src="assets/pong-intro-v2.mp4" type="video/mp4"></video>
 <div class="intro-caption"><span>FRAMBER RODRIGUEZ PRESENTS</span><button id="intro-start">SKIP INTRO ↗</button></div>
@@ -196,7 +199,7 @@ button:hover { transform:translateY(-2px); }
 <section id="main-menu" hidden aria-label="Main menu">
 <div class="menu-court" aria-hidden="true"><i></i><b></b><em></em></div>
 <div class="menu-content"><p class="eyebrow">THE CLASSIC. REIMAGINED.</p><h1>PIN<span>-</span>PON</h1><p class="menu-tagline">One ball. Two sides. Your next victory.</p>
-<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-leaderboard">GLOBAL LEADERBOARD</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
+<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
 <p class="creator-line">CREATED BY <strong>FRAMBER RODRIGUEZ</strong></p></div>
 <span class="menu-corner" aria-hidden="true">01 / READY TO RALLY</span>
 </section>
@@ -543,6 +546,7 @@ button:hover { transform:translateY(-2px); }
             document.getElementById('customize-button').addEventListener('click', beginCustomize);
             document.getElementById('finish-customize').addEventListener('click', finishCustomize);
             document.getElementById('back-menu').addEventListener('click', showMenu);
+            document.addEventListener('pong:pause', () => { pauseGameLoop(); finishCustomize(); });
             document.getElementById('menu-credits').addEventListener('click', () => {
                 menuScreen.hidden = true; creditsScreen.hidden = false;
                 document.dispatchEvent(new CustomEvent('pong:credits'));

@@ -22,3 +22,15 @@
 #ranking-message { text-align:center; color:#b5d3e3; font-size:12px; }
 #online-close { margin-top:15px; }
 @media(max-width:500px) { #language-bar label { display:none; } .online-panel th,.online-panel td { padding:10px 4px !important; font-size:11px; } }
+
+/* Fixed ranking shortcut, inspired by the supplied square bar-chart symbol. */
+#menu-leaderboard { position:fixed; bottom:calc(20px + env(safe-area-inset-bottom)); right:calc(20px + env(safe-area-inset-right)); z-index:105; width:56px; height:56px; padding:7px; display:grid; place-items:center; border:1px solid #717b8b; border-radius:7px; background:#101720ee; box-shadow:0 5px 24px #0008; cursor:pointer; }
+#menu-leaderboard svg { display:block; width:40px; height:40px; }
+#menu-leaderboard:hover,#menu-leaderboard:focus-visible { border-color:#82e8f3; box-shadow:0 0 22px #61d9eb44; outline:2px solid #82e8f3; outline-offset:3px; }
+.leaderboard-hint { position:absolute; right:0; bottom:68px; padding:10px 13px; border:1px solid #35586b; border-radius:6px; background:#081824; color:#dffaff; white-space:nowrap; font-size:10px; letter-spacing:.12em; opacity:0; visibility:hidden; pointer-events:none; }
+#menu-leaderboard:hover .leaderboard-hint,#menu-leaderboard:focus-visible .leaderboard-hint { opacity:1; visibility:visible; }
+body:has(#intro-screen:not([hidden])) #menu-leaderboard,
+body:has(#credits-screen:not([hidden])) #menu-leaderboard,
+body:has(#powers-screen:not([hidden])) #menu-leaderboard,
+body:has(#online-screen:not([hidden])) #menu-leaderboard { display:none; }
+@media(max-width:500px) { #menu-leaderboard { bottom:calc(14px + env(safe-area-inset-bottom)); right:calc(14px + env(safe-area-inset-right)); width:50px; height:50px; padding:5px; } }

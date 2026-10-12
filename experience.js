@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
  function release(){drag=null;idleUntil=performance.now()+1600;}
  mask.addEventListener('pointerup',release);mask.addEventListener('pointercancel',release);
  // Auth and leaderboard are unavailable until a real project is configured.
- const panel=document.createElement('section');panel.id='online-screen';panel.hidden=true;panel.setAttribute('aria-label','GLOBAL LEADERBOARD');
+ const panel=document.createElement('section');panel.id='online-screen';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','GLOBAL LEADERBOARD');
  panel.innerHTML=`<div class="online-panel"><p class="eyebrow">PIN-PON</p><h2>GLOBAL LEADERBOARD</h2>
  <p>Ranked: solo vs AI, 10 points, 1 point per goal, no undo. Classic and items have separate boards.</p>
  <p>Only public names appear. Your email stays private.</p><div id="auth-area">
@@ -58,8 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
    message('online-message',data?.length?'':'No results yet.');
   }catch(_){if(gen===fetchGeneration)message('online-message','Could not connect. Try again.');}
  }
- $('menu-leaderboard').addEventListener('click',()=>{panel.hidden=false;$('main-menu').hidden=true;board();$('online-close').focus();});
- function close(){panel.hidden=true;$('main-menu').hidden=false;$('menu-play').focus();}
+ let returnToGame=false;
+ $('menu-leaderboard').addEventListener('click',()=>{
+  returnToGame=!$('game-container').hidden;
+  if(returnToGame) document.dispatchEvent(new CustomEvent('pong:pause'));
+  panel.hidden=false;$('main-menu').hidden=true;$('game-container').hidden=true;$('game-header').hidden=true;
+  $('online-close').textContent=returnToGame?'Done':'Main Menu';board();$('online-close').focus();
+ });
+ function close(){
+  panel.hidden=true;
+  if(returnToGame){$('game-container').hidden=false;$('game-header').hidden=false;}
+  else $('main-menu').hidden=false;
+  $('menu-leaderboard').focus();
+ }
  $('online-close').addEventListener('click',close);
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)close();});
  $('board-difficulty').addEventListener('change',board);$('board-items').addEventListener('change',board);$('board-refresh').addEventListener('click',board);
