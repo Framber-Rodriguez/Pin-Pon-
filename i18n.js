@@ -16,6 +16,13 @@ const onlineMessages = {
 };
 for (const [lang, values] of Object.entries(onlineMessages)) onlineMessages.en.forEach((key,i)=>{window.PONG_TRANSLATIONS[lang][key]=values[i];});
 
+
+const multiballTranslations = {"en": ["Multiball", "Ten balls. No timer. Missed balls disappear until one remains."], "es": ["Multibola", "Diez bolas. Sin tiempo límite. Las bolas perdidas desaparecen hasta quedar una."], "fr": ["Multiballe", "Dix balles. Sans limite de temps. Les balles ratées disparaissent jusqu’à la dernière."], "pt": ["Multibola", "Dez bolas. Sem limite de tempo. As bolas perdidas desaparecem até restar uma."], "de": ["Multiball", "Zehn Bälle. Kein Timer. Verpasste Bälle verschwinden, bis einer übrig bleibt."], "it": ["Multiball", "Dieci palle. Nessun timer. Le palle perse scompaiono finché ne resta una."], "ar": ["كرات متعددة", "عشر كرات دون مؤقت. تختفي الكرات الفائتة حتى تبقى كرة واحدة."], "hi": ["मल्टीबॉल", "दस गेंदें। कोई टाइमर नहीं। छूटी गेंदें हटती हैं जब तक एक बचे।"], "zh": ["多球", "十个球，无计时。漏掉的球消失，直到只剩一个。"], "ja": ["マルチボール", "10個のボール。時間制限なし。ミスしたボールが消え、最後の1個が残る。"]};
+for (const [lang, values] of Object.entries(multiballTranslations)) {
+ window.PONG_TRANSLATIONS[lang].Multiball=values[0];
+ window.PONG_TRANSLATIONS[lang]['Ten balls. No timer. Missed balls disappear until one remains.']=values[1];
+}
+
 (() => {
  let lang='en'; try { lang=localStorage.getItem('pong-language') || navigator.language.split('-')[0]; } catch (_) {}
  if (!PONG_TRANSLATIONS[lang]) lang='en';
@@ -29,7 +36,10 @@ for (const [lang, values] of Object.entries(onlineMessages)) onlineMessages.en.f
    if(raw==='Select the table, ball or either paddle.') return [dict.CUSTOMIZE,dict.Table,dict.Ball,dict['Player 1 paddle'],dict['Player 2 / AI paddle']].join(' · ');
    if(raw.startsWith('Selected: ')) return dict.Selected+': '+tr(raw.slice(10));
    if(raw.endsWith(' color')) return tr(raw.slice(0,-6))+' · '+dict.Color;
-   if(/^\d of 5 power-ups enabled$/.test(raw)) return raw[0]+' / 5 · '+dict['POWER-UPS'];
+   const enabledMatch=raw.match(/^(\d+) of (\d+) power-ups enabled$/);
+   if(enabledMatch) return enabledMatch[1]+' / '+enabledMatch[2]+' · '+dict['POWER-UPS'];
+   if(/^Multiball: \d+$/.test(raw)) return dict.Multiball+': '+raw.split(': ')[1];
+   if(raw.includes(' | ') && !raw.startsWith('Win:')) return text.split(/\s+\|\s+/).map(tr).join(' | ');
    if(raw==='All power-ups OFF · Classic Pong'||raw==='CLASSIC MODE · POWER-UPS OFF') return dict.Classic+' · '+dict['ALL OFF'];
    if(raw==='POWER-UPS · RANDOM ITEMS ON'||raw==='POWER-UPS · ON') return dict['POWER-UPS']+' · '+dict['ALL ON'];
    if(raw.startsWith('Choose the items')||raw.startsWith('Items appear at random')) return phrases[lang].items;

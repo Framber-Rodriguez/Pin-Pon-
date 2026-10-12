@@ -10,9 +10,14 @@ A neon arcade game with solo AI challenges, local two-player matches, a cinemati
 
 - Player 1: ↑ / ↓. Solo mode also supports W / S.
 - Player 2: W / S. Space serves the ball.
+- Mouse: hold and drag deliberately to move a paddle. Ordinary mouse motion or clicks do not take over keyboard controls; a gameplay key cancels an active pointer drag.
 - Touch: drag a paddle. STOP pauses; RESUME continues; RESET starts over.
 - CUSTOMIZE: select either paddle, the ball or the table, then choose its color.
 - Credits: wheel or drag to browse. Automatic motion resumes after 1.6 seconds of inactivity and returns to the menu at the end.
+
+## Multiball
+
+Select Multiball in POWER-UPS to allow random ×10 pickups. Collecting one creates ten total balls with no timer. Missed balls disappear without scoring until one remains. The final surviving ball continues the rally; a point is awarded only when it is missed. All balls can collect items and use paddle collisions; the AI targets the nearest incoming ball. STOP pauses all balls; RESET and Undo clear the extras.
 
 ## Languages
 
