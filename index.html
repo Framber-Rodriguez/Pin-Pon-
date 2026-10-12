@@ -182,8 +182,13 @@ button:hover { transform:translateY(-2px); }
 .power-pickup { position:absolute; width:34px; height:34px; border-radius:9px; background:#102035; color:#fff; border:2px solid #c08aff; box-shadow:0 0 20px #b763ff88; display:grid; place-items:center; font-weight:800; font-size:19px; pointer-events:none; z-index:6; }
 @media(max-width:600px) { #powers-grid { grid-template-columns:repeat(2,1fr); } .power-card { padding:12px; gap:5px; } }
 </style>
+<link rel="stylesheet" href="experience.css">
+<script src="config.js"></script>
+<script defer src="i18n.js"></script>
+<script defer src="experience.js"></script>
 </head>
 <body>
+<div id="language-bar"><label for="language-select">Language</label><select id="language-select" aria-label="Language"><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="pt">Português</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="ar">العربية</option><option value="hi">हिन्दी</option><option value="zh">中文</option><option value="ja">日本語</option></select></div>
 <section id="intro-screen" aria-label="Pong introduction">
 <video id="intro-video" autoplay muted playsinline preload="auto" aria-label="Ten-second cinematic Pong introduction"><source src="assets/pong-intro-v2.mp4" type="video/mp4"></video>
 <div class="intro-caption"><span>FRAMBER RODRIGUEZ PRESENTS</span><button id="intro-start">SKIP INTRO ↗</button></div>
@@ -191,20 +196,24 @@ button:hover { transform:translateY(-2px); }
 <section id="main-menu" hidden aria-label="Main menu">
 <div class="menu-court" aria-hidden="true"><i></i><b></b><em></em></div>
 <div class="menu-content"><p class="eyebrow">THE CLASSIC. REIMAGINED.</p><h1>PIN<span>-</span>PON</h1><p class="menu-tagline">One ball. Two sides. Your next victory.</p>
-<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
+<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-leaderboard">GLOBAL LEADERBOARD</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
 <p class="creator-line">CREATED BY <strong>FRAMBER RODRIGUEZ</strong></p></div>
 <span class="menu-corner" aria-hidden="true">01 / READY TO RALLY</span>
 </section>
 <section id="credits-screen" hidden aria-label="Movie-style credits">
 <button id="close-credits">← MAIN MENU</button><div class="credits-mask"><div id="credits-roll">
-<p class="eyebrow">A FRAMBER RODRIGUEZ GAME</p><h2>PIN-PON</h2><p class="credits-role">CREATOR</p><h3>Framber Rodriguez</h3>
-<p class="credits-role">THE GAME</p><p>A new rally for an arcade classic.</p><p>Single-player challenges.<br>Local two-player matches.<br>A court that feels like yours.</p>
-<p class="credits-role">GAMEPLAY &amp; EXPERIENCE</p><p>Ball physics &amp; paddle collisions<br>Adaptive AI difficulty<br>Score-based serves &amp; undo<br>Touch &amp; keyboard controls</p>
-<p class="credits-role">PERSONALIZATION</p><p>Your table. Your paddles. Your ball.<br>Select an object and make it yours.</p>
-<p class="credits-role">BUILT WITH</p><p>HTML · CSS · JavaScript</p>
-<p class="credits-role">SPECIAL THANKS</p><p>To everyone who plays,<br>tests and keeps the rally going.</p>
-<h3>Thank you for playing.</h3><p class="credits-end">PIN-PON · 2026</p>
-</div></div><p class="credits-caption">PRESS ESC TO RETURN</p>
+<p class="eyebrow">A FRAMBER RODRIGUEZ GAME</p><h2>PIN-PON</h2>
+<p class="credits-role">CREATOR &amp; GAME DIRECTOR</p><h3>Framber Rodriguez</h3>
+<p class="credits-role">DESIGN &amp; DEVELOPMENT</p><p>Framber Rodriguez</p>
+<p class="credits-role">THE ARENA</p><p>One ball. Two sides. Your next victory.</p>
+<p class="credits-role">GAME MODES</p><p>Solo vs AI · Local two-player</p><p>Five difficulty levels</p>
+<p class="credits-role">COMBAT &amp; POWER-UPS</p><p>Giant Paddle · Quick Paddle · Slow Motion</p><p>Mega Ball · Shield</p><p>Random drops. Your rules.</p>
+<p class="credits-role">MAKE IT YOURS</p><p>Custom tables, paddles and ball colors</p><p>Keyboard and touch controls</p>
+<p class="credits-role">THE GLOBAL CHALLENGE</p><p>Compete in your difficulty category</p><p>Sign in to save your results</p>
+<p class="credits-role">ENGINE &amp; TECHNOLOGY</p><p>HTML · CSS · JavaScript · Supabase</p>
+<p class="credits-role">SPECIAL THANKS</p><p>To every player who keeps the rally alive</p>
+<h3>Thank you for playing.</h3><p class="credits-end">PIN-PON · 2026 · Framber Rodriguez</p>
+</div></div><p class="credits-caption">Scroll or drag to explore · Auto-roll resumes · Esc to return</p>
 </section>
 <section id="powers-screen" hidden aria-label="Power-ups menu"><div class="powers-panel"><p class="eyebrow">BUILD YOUR MATCH</p><h2>POWER-UPS</h2><p>Choose the items that can appear. Hit an item with the ball to claim it for the last player who touched the ball.</p><div class="power-actions"><button id="powers-all">ALL ON</button><button id="powers-none">ALL OFF</button></div><div id="powers-grid"></div><p id="powers-summary" role="status"></p><p class="power-note">Items appear at random times and positions during live rallies. There is no score trigger or fixed schedule. Pausing also pauses items and effects.</p><button id="powers-done" class="menu-action">DONE</button></div></section>
 <header id="game-header" hidden><span class="eyebrow">FRAMBER RODRIGUEZ</span><h1>PIN-PON</h1><p>↑ / ↓ or W / S to move · Space to serve · Drag to play on touchscreens</p></header>
@@ -319,6 +328,7 @@ button:hover { transform:translateY(-2px); }
                 const label = document.createElement('label'); label.className = 'power-card';
                 label.innerHTML = `<input type="checkbox" checked value="${power.id}" aria-label="${power.name}"><span><span class="power-symbol" aria-hidden="true">${power.symbol}</span><strong>${power.name}</strong><small>${power.description}</small></span>`;
                 label.querySelector('input').addEventListener('change', e => {
+                    if (rankedMatch && (gameRunning || canResumeMatch)) rankedMatch.changed = true;
                     if (e.target.checked) enabledPowers.add(power.id); else enabledPowers.delete(power.id);
                     if (!e.target.checked) activeEffects = activeEffects.filter(effect => effect.id !== power.id);
                     if (pickup && !enabledPowers.has(pickup.id)) removePickup();
@@ -403,6 +413,7 @@ button:hover { transform:translateY(-2px); }
             document.getElementById('match-powers').addEventListener('click', () => openPowerMenu(false));
             document.getElementById('powers-done').addEventListener('click', closePowerMenu);
             function setAllPowers(on) {
+                if (rankedMatch && (gameRunning || canResumeMatch)) rankedMatch.changed = true;
                 enabledPowers.clear(); if (on) powerCatalog.forEach(p => enabledPowers.add(p.id));
                 powerGrid.querySelectorAll('input').forEach(input => { input.checked = on; });
                 if (!on) { removePickup(); activeEffects = []; applyPowerDimensions(); }
@@ -458,6 +469,7 @@ button:hover { transform:translateY(-2px); }
             let editingColors = false;
             let selectedColorTarget = null;
             let creditsCloseTimer = null;
+            let rankedMatch = null;
             const introScreen = document.getElementById('intro-screen');
             const menuScreen = document.getElementById('main-menu');
             const introVideo = document.getElementById('intro-video');
@@ -533,15 +545,11 @@ button:hover { transform:translateY(-2px); }
             document.getElementById('back-menu').addEventListener('click', showMenu);
             document.getElementById('menu-credits').addEventListener('click', () => {
                 menuScreen.hidden = true; creditsScreen.hidden = false;
-                creditsRoll.classList.remove('rolling');
-                void creditsRoll.offsetWidth;
-                creditsRoll.classList.add('rolling');
-                clearTimeout(creditsCloseTimer);
-                creditsCloseTimer = setTimeout(showMenu, 36000);
+                document.dispatchEvent(new CustomEvent('pong:credits'));
                 document.getElementById('close-credits').focus();
             });
             document.getElementById('close-credits').addEventListener('click', showMenu);
-            creditsRoll.addEventListener('animationend', showMenu);
+
             document.addEventListener('keydown', e => { if (e.key === 'Escape' && !creditsScreen.hidden) showMenu(); });
             introVideo.addEventListener('ended', showMenu);
             introVideo.addEventListener('error', showMenu);
@@ -726,9 +734,9 @@ button:hover { transform:translateY(-2px); }
                      fullscreenButton.textContent = "Fullscreen";
                  }
              }
-             function handleWinScoreChange(e) { /* ... same ... */ let newValue = parseInt(e.target.value, 10); const minVal = parseInt(winScoreInput.min, 10) || 1; const maxVal = parseInt(winScoreInput.max, 10) || 1000; if (isNaN(newValue)) { newValue = 10; } winScoreLimit = Math.max(minVal, Math.min(newValue, maxVal)); e.target.value = winScoreLimit; console.log("Win score limit set to:", winScoreLimit); updateInstructions(); }
-             function handlePointsChange(e) { /* ... same ... */ let newValue = parseInt(e.target.value, 10); if (isNaN(newValue) || newValue < 1) { newValue = 1; } const maxVal = parseInt(pointsPerScoreInput.max, 10) || 1000; pointsPerScoreValue = Math.min(newValue, maxVal); e.target.value = pointsPerScoreValue; console.log("Points per score set to:", pointsPerScoreValue); updateInstructions(); }
-             function handleModeChange() { /* ... same ... */ const selectedMode = document.querySelector('input[name="gameMode"]:checked').value; gameMode = selectedMode; const is1P = (gameMode === '1p'); difficultySelect.disabled = !is1P; difficultySelect.style.opacity = is1P ? '1' : '0.5'; difficultySelect.style.cursor = is1P ? 'pointer' : 'not-allowed'; if (is1P && ai) { changeDifficulty({ target: difficultySelect }); } resetPaddles(); if (ball) ball.reset(null); updateInstructions(); }
+             function handleWinScoreChange(e) { if (rankedMatch && (gameRunning || canResumeMatch)) rankedMatch.changed = true; /* ... same ... */ let newValue = parseInt(e.target.value, 10); const minVal = parseInt(winScoreInput.min, 10) || 1; const maxVal = parseInt(winScoreInput.max, 10) || 1000; if (isNaN(newValue)) { newValue = 10; } winScoreLimit = Math.max(minVal, Math.min(newValue, maxVal)); e.target.value = winScoreLimit; console.log("Win score limit set to:", winScoreLimit); updateInstructions(); }
+             function handlePointsChange(e) { if (rankedMatch && (gameRunning || canResumeMatch)) rankedMatch.changed = true; /* ... same ... */ let newValue = parseInt(e.target.value, 10); if (isNaN(newValue) || newValue < 1) { newValue = 1; } const maxVal = parseInt(pointsPerScoreInput.max, 10) || 1000; pointsPerScoreValue = Math.min(newValue, maxVal); e.target.value = pointsPerScoreValue; console.log("Points per score set to:", pointsPerScoreValue); updateInstructions(); }
+             function handleModeChange() { if (rankedMatch && (gameRunning || canResumeMatch)) rankedMatch.changed = true; /* ... same ... */ const selectedMode = document.querySelector('input[name="gameMode"]:checked').value; gameMode = selectedMode; const is1P = (gameMode === '1p'); difficultySelect.disabled = !is1P; difficultySelect.style.opacity = is1P ? '1' : '0.5'; difficultySelect.style.cursor = is1P ? 'pointer' : 'not-allowed'; if (is1P && ai) { changeDifficulty({ target: difficultySelect }); } resetPaddles(); if (ball) ball.reset(null); updateInstructions(); }
              function updateInstructions() { /* ... same ... */ let text = `Win: ${winScoreLimit} | Pts: ${pointsPerScoreValue} | `; if (gameMode === '1p') { const difficultyText = difficultySelect.options[difficultySelect.selectedIndex].text; text += `P1 [↑][↓] | Fire [Space] | AI: ${difficultyText}`; } else { text += `P1 [↑][↓] | P2 [W][S] | Fire [Space]`; } instructionsEl.innerHTML = text.replace(/\|/g, '<span style="opacity:0.5; margin: 0 4px;">|</span>'); }
              function resumeMatch() {
                  if (!canResumeMatch || gameRunning) return;
@@ -744,6 +752,7 @@ button:hover { transform:translateY(-2px); }
                  console.log(`Starting game... Mode: ${gameMode}, Difficulty: ${gameMode === '1p' ? difficultySelect.value : 'N/A'}`);
                  try {
                      if (!player1 || !player2 || !ball) { throw new Error("Initialization failed, cannot start game."); }
+                     rankedMatch = { difficulty: difficultySelect.value, mode: gameMode, target: winScoreLimit, points: pointsPerScoreValue, items: [...enabledPowers].sort().join(','), undo: false, changed: false, session: window.PongOnline?.userId || null, id: crypto.randomUUID() };
                      resetPowerMatch(); score = [0, 0]; keysPressed = {}; framesSinceStart = 0; lastScoreState = null; undoButton.disabled = true;
                      updateScoreDisplay(); resetPaddles();
                      player1El.style.backgroundColor = player1ColorPicker.value; player2El.style.backgroundColor = player2ColorPicker.value; ballEl.style.backgroundColor = ballColorPicker.value; game.style.backgroundColor = backgroundColorPicker.value;
@@ -775,20 +784,20 @@ button:hover { transform:translateY(-2px); }
                     lastScoreState = null; undoButton.disabled = true;
                     if (ball) ball.reset(null);
                     updateInstructions();
-                    setTimeout(() => { alert(winnerMessage); }, 50);
+                    setTimeout(() => { alert(window.PongI18n ? window.PongI18n.translate(winnerMessage) : winnerMessage); }, 50);
                  }
              }
              function handleResetGame() { // Modified to pause music
-                console.log("Stop & Reset button clicked.");
+                console.log("Reset button clicked.");
                 pauseGameLoop(); // Stop the current game loop & pause music if running
                 initializeGame(); // Re-initialize everything (sets music state based on selection)
              }
-             function handleUndoPoint() { /* ... same ... */ if (!lastScoreState) { console.log("Undo clicked, but no previous score state found."); return; } console.log("Undoing last point..."); score = [...lastScoreState.score]; updateScoreDisplay(); let server = null; if (ballPossessionOnScore) { server = (lastScoreState.scorer === 1) ? player2 : player1; } ball.reset(server); console.log(`Score reverted to ${score[0]}-${score[1]}. Ball reset.`); lastScoreState = null; undoButton.disabled = true; }
+             function handleUndoPoint() { if (rankedMatch) rankedMatch.undo = true; /* ... same ... */ if (!lastScoreState) { console.log("Undo clicked, but no previous score state found."); return; } console.log("Undoing last point..."); score = [...lastScoreState.score]; updateScoreDisplay(); let server = null; if (ballPossessionOnScore) { server = (lastScoreState.scorer === 1) ? player2 : player1; } ball.reset(server); console.log(`Score reverted to ${score[0]}-${score[1]}. Ball reset.`); lastScoreState = null; undoButton.disabled = true; }
              function resetPaddles() { /* ... same ... */ try { if (player1) { player1.y = (game.clientHeight - player1.height) / 2; player1.el.style.top = `${player1.y}px`; } if (player2) { player2.y = (game.clientHeight - player2.height) / 2; player2.el.style.top = `${player2.y}px`; } } catch(e) { console.error("Error resetting paddles", e); } }
-             function changeDifficulty(event) { /* ... same ... */ const difficulty = event.target.value; if (ai && gameMode === '1p') { ai.setDifficulty(difficulty); updateInstructions(); } }
+             function changeDifficulty(event) { if (rankedMatch && (gameRunning || canResumeMatch) && event.target.value !== rankedMatch.difficulty) rankedMatch.changed = true; /* ... same ... */ const difficulty = event.target.value; if (ai && gameMode === '1p') { ai.setDifficulty(difficulty); updateInstructions(); } }
              function updateScoreDisplay() { /* ... same ... */ player1ScoreEl.textContent = score[0]; player2ScoreEl.textContent = score[1]; }
              function checkCollisions() { /* ... same ... */ if (!gameRunning || ball.owner) return; if (ball.velocity[0] < 0 && ball.x <= player1.el.offsetLeft + player1.width + ball.size / 2 && ball.x >= player1.el.offsetLeft && ball.y + ball.size > player1.y && ball.y < player1.y + player1.height) { const intersectY = player1.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player1.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); lastHitter = player1; ball.x = player1.el.offsetLeft + player1.width + 1; emitImpact(ball.x, ball.y + ball.size / 2, player1ColorPicker.value); } else if (ball.velocity[0] > 0 && ball.x + ball.size >= player2.el.offsetLeft - ball.size / 2 && ball.x <= player2.el.offsetLeft + player2.width && ball.y + ball.size > player2.y && ball.y < player2.y + player2.height) { const intersectY = player2.getCenterY() - (ball.y + ball.size / 2); const normalizedIntersectY = intersectY / (player2.height / 2); const bounceAngle = normalizedIntersectY * MAX_BOUNCE_ANGLE; currentBallSpeed += BALL_SPEED_INCREASE; ball.velocity[0] = -currentBallSpeed * Math.cos(bounceAngle); ball.velocity[1] = -currentBallSpeed * Math.sin(bounceAngle); lastHitter = player2; ball.x = player2.el.offsetLeft - ball.size - 1; emitImpact(ball.x + ball.size, ball.y + ball.size / 2, player2ColorPicker.value); } }
-             function checkScored() { /* ... same ... */ if (!gameRunning || ball.owner || framesSinceStart < 5) return; if (useShield()) return; const gameWidth = game.clientWidth; let scorer = 0; if (ball.x <= 0) { scorer = 2; } else if (ball.x + ball.size >= gameWidth) { scorer = 1; } if (scorer !== 0) { lastScoreState = { score: [...score], scorer: scorer }; undoButton.disabled = false; if (scorer === 1) { score[0] += pointsPerScoreValue; } else { score[1] += pointsPerScoreValue; } updateScoreDisplay(); if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) { const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2'); const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`; console.log(`${winnerName} wins! ${finalScoreMsg}`); triggerWinAnimation(scorer === 1 ? 'left' : 'right'); pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`); } else { const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null; ball.reset(server); } } }
+             function checkScored() { /* ... same ... */ if (!gameRunning || ball.owner || framesSinceStart < 5) return; if (useShield()) return; const gameWidth = game.clientWidth; let scorer = 0; if (ball.x <= 0) { scorer = 2; } else if (ball.x + ball.size >= gameWidth) { scorer = 1; } if (scorer !== 0) { lastScoreState = { score: [...score], scorer: scorer }; undoButton.disabled = false; if (scorer === 1) { score[0] += pointsPerScoreValue; } else { score[1] += pointsPerScoreValue; } updateScoreDisplay(); if (score[0] >= winScoreLimit || score[1] >= winScoreLimit) { const winnerName = score[0] >= winScoreLimit ? 'Player 1' : (gameMode === '1p' ? 'AI' : 'Player 2'); const finalScoreMsg = `Final Score: ${score[0]} - ${score[1]}`; console.log(`${winnerName} wins! ${finalScoreMsg}`); document.dispatchEvent(new CustomEvent('pong:result', { detail: { ...rankedMatch, playerScore: score[0], opponentScore: score[1], eligible: !!rankedMatch && rankedMatch.mode === '1p' && rankedMatch.target === 10 && rankedMatch.points === 1 && !rankedMatch.undo && !rankedMatch.changed && rankedMatch.session === (window.PongOnline?.userId || null) } })); rankedMatch = null; triggerWinAnimation(scorer === 1 ? 'left' : 'right'); pauseGameLoop(`${winnerName} wins! ${finalScoreMsg}`); } else { const server = ballPossessionOnScore ? (scorer === 1 ? player1 : player2) : null; ball.reset(server); } } }
              function triggerWinAnimation(winnerSide) { /* ... same ... */ const colors = ['var(--win-color1)', 'var(--win-color2)', 'var(--win-color3)', 'var(--win-color4)']; const emitterX = game.clientWidth / 2; const emitterY = game.clientHeight / 2; for (let i = 0; i < WIN_PARTICLE_COUNT; i++) { const particle = document.createElement('div'); particle.classList.add('win-particle'); game.appendChild(particle); const angle = Math.random() * Math.PI * 2; const speed = 0.8 + Math.random() * 0.7; const duration = 1.5 + Math.random() * 1.0; particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; particle.style.left = `${emitterX}px`; particle.style.top = `${emitterY}px`; particle.style.setProperty('--vx', Math.cos(angle) * speed); particle.style.setProperty('--vy', Math.sin(angle) * speed); particle.style.animation = `win-explode ${duration}s ease-out forwards`; setTimeout(() => { particle.remove(); }, duration * 1000); } }
              // --- Game Loop --- (Unchanged)
              function update(time) { if (!gameRunning) { animationFrameId = null; return; } const deltaTime = time - lastUpdate; const cappedDeltaTime = Math.min(deltaTime, 50); lastUpdate = time; framesSinceStart++; try { player1.update(cappedDeltaTime); if (gameMode === '1p') { ai.update(cappedDeltaTime); } else { player2.update(cappedDeltaTime); } ball.update(cappedDeltaTime); checkCollisions(); updatePowers(cappedDeltaTime); checkScored(); if (gameRunning) { animationFrameId = requestAnimationFrame(update); } else { console.log("Game loop ending because gameRunning became false."); animationFrameId = null; } } catch (error) { console.error("Error during game update:", error); alert(`A critical error occurred during the game loop: ${error.message}. Check the console (F12). Game stopped.`); pauseGameLoop(); } }

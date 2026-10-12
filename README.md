@@ -1,36 +1,44 @@
-# Modern Web Game
+# PIN-PON
 
-A single-file modernized browser Pong game (HTML/CSS/JS). Includes a Dev Log and Tutorial sections.
+Created and directed by **Framber Rodriguez**.
 
-## Run locally
-Just open `index.html` in a browser.
+[START PIN-PON](https://framber-rodriguez.github.io/Pin-Pon-/)
 
-## Music
-Put your audio files in `/music/` and update the select list in the UI if needed.
-This repo ships with placeholder filenames only.
+A neon arcade game with solo AI challenges, local two-player matches, a cinematic introduction, selectable random power-ups, object color customization, and interactive rolling credits.
 
-## Deploy to GitHub Pages
-1. Create a new GitHub repo (e.g., `modern-web-game`).
-2. Push the files (see commands below).
-3. Pages will build from the `gh-pages` branch automatically via the workflow included here.
+## Controls
 
-### One-time setup & push
-```bash
-git init
-git add .
-git commit -m "Initial commit: Modern Web Game"
-git branch -M main
-# Replace with your repo
-git remote add origin https://github.com/YOUR-USER/modern-web-game.git
-git push -u origin main
-```
+- Player 1: ↑ / ↓. Solo mode also supports W / S.
+- Player 2: W / S. Space serves the ball.
+- Touch: drag a paddle. STOP pauses; RESUME continues; RESET starts over.
+- CUSTOMIZE: select either paddle, the ball or the table, then choose its color.
+- Credits: wheel or drag to browse. Automatic motion resumes after 1.6 seconds of inactivity and returns to the menu at the end.
 
-### Publish with the provided workflow
-This repo includes a GitHub Actions workflow that:
-- Builds a Pages artifact from the root (static site)
-- Publishes to the `gh-pages` branch
+## Languages
 
-After your first push, go to **Settings → Pages** and ensure "Source: GitHub Actions" is selected.
+English, Spanish, French, Portuguese, German, Italian, Arabic, Hindi, Chinese and Japanese. Select a language at the top right; the game remembers it. PIN-PON, creator names and provider brands stay unchanged. The cinematic video is a rendered asset and does not change language.
 
-Once deployed, your site will be available at:
-`https://YOUR-USER.github.io/modern-web-game/`
+## Global leaderboard — setup required
+
+The interface and Supabase integration are included. Until configured, the interface clearly shows setup pending and does not pretend to save scores.
+
+1. Create or connect a dedicated Supabase project.
+2. Run `supabase/schema.sql` in its SQL editor.
+3. Put the project URL and **publishable** key (or legacy anon key) in `config.js`. Never publish a service-role key or OAuth secret.
+4. Set Auth Site URL to `https://framber-rodriguez.github.io/Pin-Pon-/`. Add both the root URL and `https://framber-rodriguez.github.io/Pin-Pon-/pong.html` to allowed redirect URLs.
+5. Enable email magic links. Configure production email delivery if needed.
+6. Enable Google, Discord or Facebook in Supabase with the provider's application credentials and the callback URL shown there. Only then add their lowercase names to `config.js` providers.
+
+Sign in before starting a match to save its result. Categories: Easy, Normal, Hard, Very Hard, Impossible; separate Classic and Items boards. Ranked matches are solo vs AI, first to 10, 1 point per goal, no undo. Changing rules or powers during a match makes it practice. Losses are saved, but standings show players with wins. Rank sorts by wins, then cumulative winning score margin (the Points column), then earliest result. The top 50 are displayed.
+
+Private emails never appear in public standings. Direct table access is revoked; authenticated result submission uses a constrained RPC. Public reads return display names and totals only. Duplicate match IDs are ignored and submissions are rate-limited.
+
+**Integrity limit:** gameplay runs in the browser. These are community results, not server-verified competition scores. Authentication, database validation and rate limits do not prove that a client actually played the match. Competitive anti-cheat would require server-authoritative gameplay or replay validation.
+
+## Development
+
+Serve this directory with a static HTTP server (`python -m http.server 8000`). Both `index.html` and `pong.html` are supported and kept identical. No build step. Online features require HTTPS and configured Supabase.
+
+## License
+
+MIT. The original required copyright notice is preserved in LICENSE; the 2026 additions are credited to Framber Rodriguez.
