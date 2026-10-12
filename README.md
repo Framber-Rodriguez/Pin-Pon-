@@ -47,3 +47,17 @@ Serve this directory with a static HTTP server (`python -m http.server 8000`). B
 ## License
 
 MIT. The original required copyright notice is preserved in LICENSE; the 2026 additions are credited to Framber Rodriguez.
+
+## Online matchmaking
+
+Open ONLINE 1v1 and select Server 1, 2 or 3. These are isolated matchmaking groups on the same Supabase backend in US East; they are not three geographically separate deployments. FIND MATCH pairs only users in the same group. CREATE ROOM generates a six-character invitation code; the friend must choose the same server before joining.
+
+Online classic matches are first to 15, one point per goal. Both sides share ball physics and scores calculated in Postgres; browsers send only bounded paddle inputs. The online court uses your local colors. Offline customization and power-ups are unchanged; online matches use classic rules.
+
+After a result, the loser sees VENGEANCE and the winner sees WIN AGAIN, translated into the selected language. One request waits; both requests create exactly one fresh match against the same rival, with sides swapped. Leaving declines a rematch. Requests expire after two minutes. A disconnected opponent forfeits after 15 seconds without a heartbeat; two absent players produce an abandoned match rather than a win.
+
+The global leaderboard now has a separate Online 1v1 view per server. Online results come from server match records, not the browser's solo-result submission.
+
+All queue, match and rematch operations require a verified non-anonymous Supabase account. Public email delivery and social-login credentials are still pending as described above; enabling the online menu does not remove that sign-in requirement.
+
+Deployment: apply `supabase/matchmaking.sql` after the base schema. It creates private tables and bounded RPC entry points. Clients poll shared authoritative state (70 ms minimum spacing after a successful response; only one polling request in flight), interpolate snapshots for rendering, and use slower heartbeats in the queue and after results. Actual response frequency depends on network latency.

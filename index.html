@@ -182,10 +182,13 @@ button:hover { transform:translateY(-2px); }
 .power-pickup { position:absolute; width:34px; height:34px; border-radius:9px; background:#102035; color:#fff; border:2px solid #c08aff; box-shadow:0 0 20px #b763ff88; display:grid; place-items:center; font-weight:800; font-size:19px; pointer-events:none; z-index:6; }
 @media(max-width:600px) { #powers-grid { grid-template-columns:repeat(2,1fr); } .power-card { padding:12px; gap:5px; } }
 </style>
-<link rel="stylesheet" href="experience.css?v=multiball-20261012">
+<link rel="stylesheet" href="experience.css?v=online-20261012">
+<link rel="stylesheet" href="matchmaking.css?v=online-20261012">
 <script src="config.js"></script>
-<script defer src="i18n.js?v=multiball-20261012"></script>
-<script defer src="experience.js?v=multiball-20261012"></script>
+<script defer src="i18n.js?v=online-20261012"></script>
+<script defer src="matchmaking-i18n.js?v=online-20261012"></script>
+<script defer src="experience.js?v=online-20261012"></script>
+<script defer src="matchmaking.js?v=online-20261012"></script>
 </head>
 <body>
 <div id="language-bar"><label for="language-select">Language</label><select id="language-select" aria-label="Language"><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="pt">Português</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="ar">العربية</option><option value="hi">हिन्दी</option><option value="zh">中文</option><option value="ja">日本語</option></select></div>
@@ -199,7 +202,7 @@ button:hover { transform:translateY(-2px); }
 <section id="main-menu" hidden aria-label="Main menu">
 <div class="menu-court" aria-hidden="true"><i></i><b></b><em></em></div>
 <div class="menu-content"><p class="eyebrow">THE CLASSIC. REIMAGINED.</p><h1>PIN<span>-</span>PON</h1><p class="menu-tagline">One ball. Two sides. Your next victory.</p>
-<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
+<div class="menu-buttons"><button class="menu-action" id="menu-play">START <span aria-hidden="true">↗</span></button><button class="menu-secondary" id="menu-online">ONLINE 1v1</button><button class="menu-secondary" id="menu-customize">CUSTOMIZE</button><button class="menu-secondary" id="menu-powers">POWER-UPS</button><button class="menu-secondary" id="menu-credits">CREDITS</button></div>
 <p class="creator-line">CREATED BY <strong>FRAMBER RODRIGUEZ</strong></p></div>
 <span class="menu-corner" aria-hidden="true">01 / READY TO RALLY</span>
 </section>

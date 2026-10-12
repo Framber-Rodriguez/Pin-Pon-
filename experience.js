@@ -25,17 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
  // Auth and leaderboard are unavailable until a real project is configured.
  const panel=document.createElement('section');panel.id='online-screen';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','GLOBAL LEADERBOARD');
  panel.innerHTML=`<div class="online-panel"><p class="eyebrow">PIN-PON</p><h2>GLOBAL LEADERBOARD</h2>
- <p>Ranked: solo vs AI, 10 points, 1 point per goal, no undo. Classic and items have separate boards.</p>
+ <p id="board-rules-note">Ranked: solo vs AI, 10 points, 1 point per goal, no undo. Classic and items have separate boards.</p>
  <p>Only public names appear. Your email stays private.</p><div id="auth-area">
  <form id="auth-form"><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="email" required maxlength="254"><button type="submit" id="email-login">Send login link</button></form>
  <div id="oauth-buttons" class="auth-controls"></div><div id="profile-controls" hidden><label for="public-name">Display name</label> <input id="public-name" maxlength="24" autocomplete="nickname"> <button id="save-name">Save name</button> <button id="signout">Sign out</button></div><p id="auth-message" role="status"></p></div>
- <div class="online-filters"><label for="board-difficulty">AI Difficulty:</label><select id="board-difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="veryHard">Very Hard</option><option value="impossible">Impossible</option></select><label for="board-items">POWER-UPS</label><select id="board-items"><option value="classic">Classic</option><option value="items">Items</option></select><button id="board-refresh">Refresh</button></div>
+ <div class="online-filters"><select id="board-kind" aria-label="Game mode"><option value="solo">Solo vs AI</option><option value="online">Online 1v1</option></select><select id="board-server" hidden aria-label="Server"><option value="arena-1">Server 1</option><option value="arena-2">Server 2</option><option value="arena-3">Server 3</option></select><label for="board-difficulty">AI Difficulty:</label><select id="board-difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="veryHard">Very Hard</option><option value="impossible">Impossible</option></select><label for="board-items">POWER-UPS</label><select id="board-items"><option value="classic">Classic</option><option value="items">Items</option></select><button id="board-refresh">Refresh</button></div>
  <p id="online-message" role="status"></p><table id="leaderboard-table"><thead><tr><th>Rank</th><th>Player</th><th>Wins</th><th>Points</th></tr></thead><tbody id="board-rows" data-no-translate></tbody></table>
- <p>Results are reported by the browser, not verified by a game server.</p><button id="online-close">Main Menu</button></div>`;
+ <p id="board-source-note">Results are reported by the browser, not verified by a game server.</p><button id="online-close">Main Menu</button></div>`;
  document.body.appendChild(panel);
  const notice=document.createElement('p');notice.id='ranking-message';notice.setAttribute('role','status');$('game-container').appendChild(notice);
  let client=null,user=null,fetchGeneration=0;
- window.PongOnline={get userId(){return user?.id || null;}};
+ window.PongOnline={get userId(){return user?.id || null;},get client(){return client;},showSignIn(){document.getElementById('menu-leaderboard').click();}};
  const cfg=window.PONG_CONFIG || {};
  function message(id,text){$(id).textContent=text;}
  function authUI(){
@@ -48,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if(!client){message('online-message','Leaderboard setup pending.');return;}
   message('online-message','Loading…');
   try {
-   const {data,error}=await client.rpc('pong_leaderboard',{p_difficulty:$('board-difficulty').value,p_ruleset:$('board-items').value});
+   const online=$('board-kind').value==='online';
+   const {data,error}=online?await client.rpc('pong_online_board',{p_server:$('board-server').value}):await client.rpc('pong_leaderboard',{p_difficulty:$('board-difficulty').value,p_ruleset:$('board-items').value});
    if(gen!==fetchGeneration)return;if(error)throw error;
    for(const [i,row] of (data||[]).entries()){
     const tr=document.createElement('tr');
@@ -70,9 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if(returnToGame){$('game-container').hidden=false;$('game-header').hidden=false;}
   else $('main-menu').hidden=false;
   $('menu-leaderboard').focus();
+  document.dispatchEvent(new CustomEvent('pong:authClosed'));
  }
  $('online-close').addEventListener('click',close);
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)close();});
+ $('board-kind').addEventListener('change',()=>{const online=$('board-kind').value==='online';$('board-server').hidden=!online;$('board-rules-note').textContent=online?'Classic online · First to 15 points':'Ranked: solo vs AI, 10 points, 1 point per goal, no undo. Classic and items have separate boards.';$('board-source-note').textContent=online?'Online scores are calculated by the server.':'Results are reported by the browser, not verified by a game server.';for(const id of ['board-difficulty','board-items']){$(id).hidden=online;document.querySelector('label[for="'+id+'"]').hidden=online;}board();});
+ $('board-server').addEventListener('change',board);
  $('board-difficulty').addEventListener('change',board);$('board-items').addEventListener('change',board);$('board-refresh').addEventListener('click',board);
  $('auth-form').addEventListener('submit',async e=>{
   e.preventDefault();if(!client)return;const button=$('email-login');button.disabled=true;
@@ -100,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try{
    const sdk=await import('https://esm.sh/@supabase/supabase-js@2.57.4');
    client=sdk.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{flowType:'pkce',detectSessionInUrl:true}});
-   client.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();});
+   client.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;authUI();document.dispatchEvent(new CustomEvent('pong:authChanged'));});
    const {data,error}=await client.auth.getSession();if(error)throw error;user=data.session?.user||null;authUI();
    for(const provider of (cfg.providers||[]).filter(p=>['google','discord','facebook'].includes(p))){
     const b=document.createElement('button');b.textContent=provider[0].toUpperCase()+provider.slice(1);b.dataset.noTranslate='';
