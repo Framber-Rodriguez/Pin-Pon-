@@ -1,0 +1,76 @@
+name: PIN-PON backend health check
+
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/backend-health.yml'
+
+permissions: {}
+
+concurrency:
+  group: pin-pon-backend-health
+  cancel-in-progress: false
+
+jobs:
+  leaderboard:
+    if: github.repository == 'Framber-Rodriguez/Pin-Pon-'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Publishable key already used by the public game; never use a secret key.
+      SUPABASE_URL: https://ltulzebhhfoyownduxii.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_JZ_p1ikuVI5biTuywf8FoA_wjQRnGvh
+    steps:
+      - name: Check the three online leaderboards
+        shell: python
+        run: |
+          import json
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+
+          endpoint = os.environ["SUPABASE_URL"] + "/rest/v1/rpc/pong_online_board"
+          headers = {
+              "apikey": os.environ["SUPABASE_PUBLISHABLE_KEY"],
+              "Content-Type": "application/json",
+          }
+          for server in ("arena-1", "arena-2", "arena-3"):
+              for attempt in range(3):
+                  request = urllib.request.Request(
+                      endpoint,
+                      data=json.dumps({"p_server": server}).encode(),
+                      headers=headers,
+                      method="POST",
+                  )
+                  try:
+                      with urllib.request.urlopen(request, timeout=30) as response:
+                          rows = json.load(response)
+                      if not isinstance(rows, list):
+                          raise ValueError("Expected a leaderboard array")
+                      if any(
+                          not isinstance(row, dict)
+                          or not {"display_name", "wins", "points"}.issubset(row)
+                          for row in rows
+                      ):
+                          raise ValueError("Unexpected leaderboard row format")
+                      print(f"{server}: OK")
+                      break
+                  except (urllib.error.URLError, TimeoutError, ValueError) as error:
+                      if attempt == 2:
+                          raise RuntimeError(
+                              f"{server}: leaderboard check failed; check Supabase project status"
+                          ) from error
+                      time.sleep(10 * (attempt + 1))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(
+                  "### PIN-PON backend healthy\n"
+                  "All three online leaderboard queries succeeded. "
+                  "This check does not create scores or users.\n\n"
+                  "Runs daily at 14:23 UTC and can be started manually. "
+                  "Free-tier availability is not guaranteed.\n"
+              )
