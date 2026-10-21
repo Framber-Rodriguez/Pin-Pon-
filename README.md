@@ -61,3 +61,9 @@ The global leaderboard now has a separate Online 1v1 view per server. Online res
 All queue, match and rematch operations require a verified non-anonymous Supabase account. Public email delivery and social-login credentials are still pending as described above; enabling the online menu does not remove that sign-in requirement.
 
 Deployment: apply `supabase/matchmaking.sql` after the base schema. It creates private tables and bounded RPC entry points. Clients poll shared authoritative state (70 ms minimum spacing after a successful response; only one polling request in flight), interpolate snapshots for rendering, and use slower heartbeats in the queue and after results. Actual response frequency depends on network latency.
+
+## Free-tier backend health check
+
+[Backend health workflow](https://github.com/Framber-Rodriguez/Pin-Pon-/actions/workflows/backend-health.yml) runs daily at 14:23 UTC, on changes to its workflow file, or with **Run workflow**. It reads the three online leaderboards with the game's publishable key, validates the responses, and fails after bounded retries if the backend is unavailable. It never creates users, matches or scores. No privileged credentials are needed.
+
+Regular database queries may help avoid Supabase free-tier inactivity pausing, but this is not an uptime guarantee and cannot resume a paused project. Resume it from the Supabase dashboard if necessary. GitHub can delay scheduled runs and automatically disables schedules in public repositories after 60 days without repository activity; re-enable the workflow in Actions when that happens. GitHub failure notifications depend on your Actions notification settings.
